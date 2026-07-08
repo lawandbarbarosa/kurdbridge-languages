@@ -83,7 +83,7 @@ function AuthPage() {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(result.error.message ?? "هەڵە لە چوونەژوورەوە");
+        toast.error(result.error.message ?? t("signin_error"));
         return;
       }
       if (result.redirected) return;
