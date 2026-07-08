@@ -32,6 +32,11 @@ const s = {
   have_account: "هەژمارت هەیە؟",
   auth_welcome: "بەخێربێیت بۆ زمانگە",
   auth_welcome_sub: "زمان فێربە، بە کوردی",
+  invalid_data: "داتای نادروست",
+  account_created: "هەژمار دروستکرا",
+  welcome: "بەخێربێیت",
+  signin_error: "هەڵە لە چوونەژوورەوە",
+  signed_out: "چوویتەدەرەوە",
 
   // Onboarding
   choose_language: "کام زمان دەتەوێت فێربیت؟",
