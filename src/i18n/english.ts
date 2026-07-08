@@ -2,7 +2,7 @@
 import type { sorani } from "./sorani";
 
 export const english: typeof sorani = {
-  app_name: "Zimange",
+  app_name: "Batlis",
   tagline: "Language learning for Kurds",
   loading: "Loading...",
   save: "Save",
@@ -30,7 +30,7 @@ export const english: typeof sorani = {
   or: "or",
   no_account: "Don't have an account?",
   have_account: "Already have an account?",
-  auth_welcome: "Welcome to Zimange",
+  auth_welcome: "Welcome to Batlis",
   auth_welcome_sub: "Learn a language, in Kurdish",
   invalid_data: "Invalid data",
   account_created: "Account created",
