@@ -93,6 +93,7 @@ export const badini: typeof sorani = {
   language_dialect: "زاراڤێ کوردی",
   sorani: "سۆرانی",
   badini: "بادینی",
+  english: "English",
   target_language: "زمانێ ئارمانجی",
 
   hero_title: "فێرکرنا زمانی، ژ چاڤێ کوردی ڤە",
