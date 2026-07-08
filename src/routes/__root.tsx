@@ -91,10 +91,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         property: "og:description",
         content:
-          "زمان فێربە بە زمانی دایک: تاقیکردنەوەی ئاست، دارە وانەکان، کارتەکان و ڕاهێنانی ڤیدیۆ.",
+          "پلاتفۆرمی فێربوونی زمان بە کوردی: ئینگلیزی، ئەڵمانی، عەرەبی و کۆری بە ڕێنمایی تەواوی کوردی، لە A1 بۆ C2.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "زمانگە — فێربوونی زمان بۆ کوردەکان" },
+      { name: "twitter:description", content: "پلاتفۆرمی فێربوونی زمان بە کوردی: ئینگلیزی، ئەڵمانی، عەرەبی و کۆری بە ڕێنمایی تەواوی کوردی، لە A1 بۆ C2." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8e89d6be-1052-4571-9690-c3de13b0d2af/id-preview-eb54392e--dea7b988-58e2-43da-836e-f244e58356c5.lovable.app-1783538380087.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8e89d6be-1052-4571-9690-c3de13b0d2af/id-preview-eb54392e--dea7b988-58e2-43da-836e-f244e58356c5.lovable.app-1783538380087.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
