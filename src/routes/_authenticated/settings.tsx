@@ -38,7 +38,7 @@ function SettingsPage() {
         <div className="bento-card p-6">
           <h2 className="font-display text-lg font-semibold mb-4">{t("language_dialect")}</h2>
           <div className="flex gap-2">
-            {(["sorani", "badini"] as const).map((d) => (
+            {(["sorani", "badini", "english"] as const).map((d) => (
               <button
                 key={d}
                 onClick={() => { setDialect(d); diaMut.mutate(d); }}
