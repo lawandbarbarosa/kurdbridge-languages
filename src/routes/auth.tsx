@@ -44,7 +44,7 @@ function AuthPage() {
     try {
       const parsed = credSchema.safeParse({ email, password, displayName: isSignup ? displayName : undefined });
       if (!parsed.success) {
-        toast.error(parsed.error.issues[0]?.message ?? "داتای نادروست");
+        toast.error(parsed.error.issues[0]?.message ?? t("invalid_data"));
         return;
       }
       if (isSignup) {
@@ -57,7 +57,7 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("هەژمار دروستکرا");
+        toast.success(t("account_created"));
         navigate({ to: "/onboarding" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -65,7 +65,7 @@ function AuthPage() {
           password: parsed.data.password,
         });
         if (error) throw error;
-        toast.success("بەخێربێیت");
+        toast.success(t("welcome"));
         navigate({ to: "/dashboard" });
       }
     } catch (err) {
@@ -83,7 +83,7 @@ function AuthPage() {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(result.error.message ?? "هەڵە لە چوونەژوورەوە");
+        toast.error(result.error.message ?? t("signin_error"));
         return;
       }
       if (result.redirected) return;

@@ -28,7 +28,7 @@ export function AppShell({ children, activeLang }: Props) {
     await queryClient.cancelQueries();
     queryClient.clear();
     await supabase.auth.signOut();
-    toast.success("چوویتەدەرەوە");
+    toast.success(t("signed_out"));
     router.navigate({ to: "/auth", search: { mode: "signin" }, replace: true });
   }
 
