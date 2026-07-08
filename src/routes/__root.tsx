@@ -63,7 +63,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             دووبارە هەوڵبدە
           </button>
-          <a
+          
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
@@ -80,14 +80,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "زمانگە — فێربوونی زمان بۆ کوردەکان" },
+      { title: "بەتلیس — فێربوونی زمان بۆ کوردەکان" },
       {
         name: "description",
         content:
           "پلاتفۆرمی فێربوونی زمان بە کوردی: ئینگلیزی، ئەڵمانی، عەرەبی و کۆری بە ڕێنمایی تەواوی کوردی، لە A1 بۆ C2.",
       },
-      { name: "author", content: "زمانگە" },
-      { property: "og:title", content: "زمانگە — فێربوونی زمان بۆ کوردەکان" },
+      { name: "author", content: "بەتلیس" },
+      { property: "og:title", content: "بەتلیس — فێربوونی زمان بۆ کوردەکان" },
       {
         property: "og:description",
         content:
@@ -95,7 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "زمانگە — فێربوونی زمان بۆ کوردەکان" },
+      { name: "twitter:title", content: "بەتلیس — فێربوونی زمان بۆ کوردەکان" },
       { name: "twitter:description", content: "پلاتفۆرمی فێربوونی زمان بە کوردی: ئینگلیزی، ئەڵمانی، عەرەبی و کۆری بە ڕێنمایی تەواوی کوردی، لە A1 بۆ C2." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8e89d6be-1052-4571-9690-c3de13b0d2af/id-preview-eb54392e--dea7b988-58e2-43da-836e-f244e58356c5.lovable.app-1783538380087.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8e89d6be-1052-4571-9690-c3de13b0d2af/id-preview-eb54392e--dea7b988-58e2-43da-836e-f244e58356c5.lovable.app-1783538380087.png" },
