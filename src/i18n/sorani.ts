@@ -1,7 +1,7 @@
 // Kurdish (Sorani) UI strings. RTL, Arabic script.
 const s = {
   // Common
-  app_name: "زمانگە",
+  app_name: "بەتلیس",
   tagline: "فێربوونی زمان بۆ کوردەکان",
   loading: "چاوەڕوانبە...",
   save: "پاشەکەوت",
@@ -30,7 +30,7 @@ const s = {
   or: "یان",
   no_account: "هەژمارت نییە؟",
   have_account: "هەژمارت هەیە؟",
-  auth_welcome: "بەخێربێیت بۆ زمانگە",
+  auth_welcome: "بەخێربێیت بۆ بەتلیس",
   auth_welcome_sub: "زمان فێربە، بە کوردی",
   invalid_data: "داتای نادروست",
   account_created: "هەژمار دروستکرا",
@@ -122,4 +122,3 @@ const s = {
 
 export type TranslationKey = keyof typeof s;
 export const sorani: Record<TranslationKey, string> = s;
-
