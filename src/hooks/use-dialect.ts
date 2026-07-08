@@ -16,7 +16,15 @@ export function useDialect() {
     getDialect,
     () => "sorani" as Dialect,
   );
-  const dict = dialect === "badini" ? badini : sorani;
+import { english } from "@/i18n/english";
+
+export function useDialect() {
+  const dialect = useSyncExternalStore(
+    subscribeDialect,
+    getDialect,
+    () => "sorani" as Dialect,
+  );
+  const dict = dialect === "badini" ? badini : dialect === "english" ? english : sorani;
   return {
     dialect,
     setDialect: setDialectRaw,
