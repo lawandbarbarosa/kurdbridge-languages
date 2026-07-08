@@ -70,7 +70,7 @@ export const updateActiveLanguage = createServerFn({ method: "POST" })
 
 export const updateDialect = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ dialect: z.enum(["sorani", "badini"]) }).parse(d))
+  .inputValidator((d: unknown) => z.object({ dialect: z.enum(["sorani", "badini", "english"]) }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
     await supabase.from("profiles").update({ ui_dialect: data.dialect }).eq("id", userId);

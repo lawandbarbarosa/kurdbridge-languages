@@ -25,7 +25,7 @@ function SettingsPage() {
     onSuccess: () => { qc.invalidateQueries(); toast.success(t("save")); },
   });
   const diaMut = useMutation({
-    mutationFn: (d: "sorani" | "badini") => setDia({ data: { dialect: d } }),
+    mutationFn: (d: "sorani" | "badini" | "english") => setDia({ data: { dialect: d } }),
   });
 
   if (isLoading) return <AppShell><Loader2 className="h-6 w-6 animate-spin" /></AppShell>;
@@ -38,7 +38,7 @@ function SettingsPage() {
         <div className="bento-card p-6">
           <h2 className="font-display text-lg font-semibold mb-4">{t("language_dialect")}</h2>
           <div className="flex gap-2">
-            {(["sorani", "badini"] as const).map((d) => (
+            {(["sorani", "badini", "english"] as const).map((d) => (
               <button
                 key={d}
                 onClick={() => { setDialect(d); diaMut.mutate(d); }}
@@ -63,7 +63,7 @@ function SettingsPage() {
               >
                 <span className="text-3xl">{lang.flag_emoji}</span>
                 <div className="text-left rtl:text-right">
-                  <div className="font-semibold">{dialect === "sorani" ? lang.name_sorani : lang.name_badini}</div>
+                  <div className="font-semibold">{dialect === "sorani" ? lang.name_sorani : dialect === "badini" ? lang.name_badini : lang.name_en}</div>
                   <div className="text-xs text-muted-foreground">{lang.name_en}</div>
                 </div>
               </button>

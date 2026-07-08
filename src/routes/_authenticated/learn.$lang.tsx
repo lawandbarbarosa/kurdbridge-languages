@@ -65,11 +65,11 @@ function Learn() {
 
 function LessonNode({ lesson, dialect, disabled }: {
   lesson: { id: string; title_sorani: string; title_badini: string; summary_sorani: string | null; summary_badini: string | null; passed: boolean; unlocked: boolean; score: number };
-  dialect: "sorani" | "badini";
+  dialect: "sorani" | "badini" | "english";
   disabled: boolean;
 }) {
-  const title = dialect === "sorani" ? lesson.title_sorani : lesson.title_badini;
-  const summary = dialect === "sorani" ? lesson.summary_sorani : lesson.summary_badini;
+  const title = dialect === "badini" ? lesson.title_badini : lesson.title_sorani;
+  const summary = dialect === "badini" ? lesson.summary_badini : lesson.summary_sorani;
 
   const inner = (
     <div className={`bento-card p-5 flex items-start gap-4 ${disabled ? "opacity-50" : "hover:scale-[1.01] transition-transform"}`}>

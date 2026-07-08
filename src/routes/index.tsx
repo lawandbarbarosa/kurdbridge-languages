@@ -11,7 +11,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const { t } = useDialect();
+  const { t, dialect } = useDialect();
+  const dir = dialect === "english" ? "ltr" : "rtl";
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ function Landing() {
   }, []);
 
   return (
-    <div dir="rtl" className="min-h-screen">
+    <div dir={dir} className="min-h-screen">
       {/* Nav */}
       <header className="border-b border-border/60 backdrop-blur-sm bg-background/70 sticky top-0 z-40">
         <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">

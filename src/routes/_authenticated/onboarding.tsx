@@ -49,7 +49,7 @@ function Onboarding() {
             >
               <div className="text-6xl mb-4">{lang.flag_emoji}</div>
               <div className="font-display text-xl font-semibold">
-                {dialect === "sorani" ? lang.name_sorani : lang.name_badini}
+                {dialect === "sorani" ? lang.name_sorani : dialect === "badini" ? lang.name_badini : lang.name_en}
               </div>
               <div className="text-sm text-muted-foreground mt-1">{lang.name_en}</div>
             </button>

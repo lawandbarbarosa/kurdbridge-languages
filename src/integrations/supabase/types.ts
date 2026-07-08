@@ -515,7 +515,7 @@ export type Database = {
         | "listening"
         | "translate"
       target_lang: "en" | "de" | "ar" | "ko"
-      ui_dialect: "sorani" | "badini"
+      ui_dialect: "sorani" | "badini" | "english"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -652,7 +652,7 @@ export const Constants = {
         "translate",
       ],
       target_lang: ["en", "de", "ar", "ko"],
-      ui_dialect: ["sorani", "badini"],
+      ui_dialect: ["sorani", "badini", "english"],
     },
   },
 } as const

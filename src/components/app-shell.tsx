@@ -14,7 +14,8 @@ interface Props {
 }
 
 export function AppShell({ children, activeLang }: Props) {
-  const { t } = useDialect();
+  const { t, dialect } = useDialect();
+  const dir = dialect === "english" ? "ltr" : "rtl";
   const router = useRouter();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState<string | null>(null);
@@ -43,7 +44,7 @@ export function AppShell({ children, activeLang }: Props) {
   ];
 
   return (
-    <div dir="rtl" className="min-h-screen">
+    <div dir={dir} className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
           <Link to="/dashboard" className="flex items-center gap-2">
