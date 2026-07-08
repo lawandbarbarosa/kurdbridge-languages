@@ -93,6 +93,7 @@ export const english: typeof sorani = {
   language_dialect: "Interface language",
   sorani: "Sorani",
   badini: "Badini",
+  english: "English",
   target_language: "Target language",
 
   hero_title: "Language learning, from a Kurdish perspective",
