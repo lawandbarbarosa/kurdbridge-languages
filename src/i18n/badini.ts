@@ -32,6 +32,11 @@ export const badini: typeof sorani = {
   have_account: "هەژمارا تە هەیە؟",
   auth_welcome: "بخێرهاتی بۆ زمانگە",
   auth_welcome_sub: "زمانی فێربە، ب کوردی",
+  invalid_data: "داتایێت نەدروست",
+  account_created: "هەژمار هاتە دروستکرن",
+  welcome: "بخێرهاتی",
+  signin_error: "خەلەتی د کەتنا ژوور دا",
+  signed_out: "تو ژ دەرڤە چوویی",
 
   choose_language: "کیژ زمانی دخوازی فێربی؟",
   choose_language_sub: "دشێی د هەر دەمی دا زێدەتر زێدە بکەی",
