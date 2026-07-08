@@ -57,7 +57,7 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("هەژمار دروستکرا");
+        toast.success(t("account_created"));
         navigate({ to: "/onboarding" });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -65,7 +65,7 @@ function AuthPage() {
           password: parsed.data.password,
         });
         if (error) throw error;
-        toast.success("بەخێربێیت");
+        toast.success(t("welcome"));
         navigate({ to: "/dashboard" });
       }
     } catch (err) {
