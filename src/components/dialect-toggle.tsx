@@ -5,7 +5,7 @@ export function DialectToggle() {
   const { dialect, setDialect, t } = useDialect();
   return (
     <div className="inline-flex rounded-lg border border-border bg-card p-0.5 text-xs">
-      {(["sorani", "badini"] as Dialect[]).map((d) => (
+      {(["sorani", "badini", "english"] as Dialect[]).map((d) => (
         <button
           key={d}
           onClick={() => setDialect(d)}
