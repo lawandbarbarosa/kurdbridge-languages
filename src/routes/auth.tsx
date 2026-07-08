@@ -28,7 +28,8 @@ const credSchema = z.object({
 
 function AuthPage() {
   const { mode } = Route.useSearch();
-  const { t } = useDialect();
+  const { t, dialect } = useDialect();
+  const dir = dialect === "english" ? "ltr" : "rtl";
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
