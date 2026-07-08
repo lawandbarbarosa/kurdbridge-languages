@@ -100,6 +100,7 @@ const s = {
   language_dialect: "زاراوەی کوردی",
   sorani: "سۆرانی",
   badini: "بادینی",
+  english: "English",
   target_language: "زمانی ئامانج",
 
   // Marketing / landing
