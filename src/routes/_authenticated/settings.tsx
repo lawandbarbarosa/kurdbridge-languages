@@ -63,7 +63,7 @@ function SettingsPage() {
               >
                 <span className="text-3xl">{lang.flag_emoji}</span>
                 <div className="text-left rtl:text-right">
-                  <div className="font-semibold">{dialect === "sorani" ? lang.name_sorani : lang.name_badini}</div>
+                  <div className="font-semibold">{dialect === "sorani" ? lang.name_sorani : dialect === "badini" ? lang.name_badini : lang.name_en}</div>
                   <div className="text-xs text-muted-foreground">{lang.name_en}</div>
                 </div>
               </button>
