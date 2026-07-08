@@ -44,7 +44,7 @@ function AuthPage() {
     try {
       const parsed = credSchema.safeParse({ email, password, displayName: isSignup ? displayName : undefined });
       if (!parsed.success) {
-        toast.error(parsed.error.issues[0]?.message ?? "داتای نادروست");
+        toast.error(parsed.error.issues[0]?.message ?? t("invalid_data"));
         return;
       }
       if (isSignup) {
