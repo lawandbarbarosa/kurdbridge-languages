@@ -1,0 +1,1 @@
+ALTER TYPE public.ui_dialect ADD VALUE IF NOT EXISTS 'english';
