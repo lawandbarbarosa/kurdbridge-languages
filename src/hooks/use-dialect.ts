@@ -9,13 +9,6 @@ import {
 } from "@/i18n/store";
 import { sorani, type TranslationKey } from "@/i18n/sorani";
 import { badini } from "@/i18n/badini";
-
-export function useDialect() {
-  const dialect = useSyncExternalStore(
-    subscribeDialect,
-    getDialect,
-    () => "sorani" as Dialect,
-  );
 import { english } from "@/i18n/english";
 
 export function useDialect() {
