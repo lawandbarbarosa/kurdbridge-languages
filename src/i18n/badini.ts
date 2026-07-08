@@ -2,7 +2,7 @@
 import type { sorani } from "./sorani";
 
 export const badini: typeof sorani = {
-  app_name: "زمانگە",
+  app_name: "بەتلیس",
   tagline: "فێرکرنا زمانی بۆ کوردا",
   loading: "بەندبە...",
   save: "پاراستن",
@@ -30,7 +30,7 @@ export const badini: typeof sorani = {
   or: "یان",
   no_account: "هەژمارا تە نینە؟",
   have_account: "هەژمارا تە هەیە؟",
-  auth_welcome: "بخێرهاتی بۆ زمانگە",
+  auth_welcome: "بخێرهاتی بۆ بەتلیس",
   auth_welcome_sub: "زمانی فێربە، ب کوردی",
   invalid_data: "داتایێت نەدروست",
   account_created: "هەژمار هاتە دروستکرن",
