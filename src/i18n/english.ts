@@ -32,6 +32,11 @@ export const english: typeof sorani = {
   have_account: "Already have an account?",
   auth_welcome: "Welcome to Zimange",
   auth_welcome_sub: "Learn a language, in Kurdish",
+  invalid_data: "Invalid data",
+  account_created: "Account created",
+  welcome: "Welcome",
+  signin_error: "Sign-in error",
+  signed_out: "Signed out",
 
   choose_language: "Which language do you want to learn?",
   choose_language_sub: "You can add more at any time",
