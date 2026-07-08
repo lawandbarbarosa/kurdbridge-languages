@@ -25,7 +25,7 @@ function SettingsPage() {
     onSuccess: () => { qc.invalidateQueries(); toast.success(t("save")); },
   });
   const diaMut = useMutation({
-    mutationFn: (d: "sorani" | "badini") => setDia({ data: { dialect: d } }),
+    mutationFn: (d: "sorani" | "badini" | "english") => setDia({ data: { dialect: d } }),
   });
 
   if (isLoading) return <AppShell><Loader2 className="h-6 w-6 animate-spin" /></AppShell>;
