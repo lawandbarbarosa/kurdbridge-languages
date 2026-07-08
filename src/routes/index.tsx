@@ -11,7 +11,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const { t } = useDialect();
+  const { t, dialect } = useDialect();
+  const dir = dialect === "english" ? "ltr" : "rtl";
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
