@@ -96,7 +96,7 @@ function AuthPage() {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen grid md:grid-cols-2">
+    <div dir={dir} className="min-h-screen grid md:grid-cols-2">
       {/* Left visual */}
       <div className="hidden md:flex flex-col justify-between p-10 gradient-emerald text-primary-foreground relative overflow-hidden">
         <Link to="/" className="flex items-center gap-2 relative z-10">
