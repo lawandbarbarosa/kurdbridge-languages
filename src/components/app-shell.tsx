@@ -14,7 +14,8 @@ interface Props {
 }
 
 export function AppShell({ children, activeLang }: Props) {
-  const { t } = useDialect();
+  const { t, dialect } = useDialect();
+  const dir = dialect === "english" ? "ltr" : "rtl";
   const router = useRouter();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState<string | null>(null);
