@@ -162,10 +162,10 @@ export const adminUpsertVocab = createServerFn({ method: "POST" })
       level_cefr: cefrEnum,
       topic: z.string().min(1).max(100),
       word: z.string().min(1).max(200),
-      translation_sorani: z.string().min(1).max(200),
-      translation_badini: z.string().min(1).max(200),
+      kurdish_sorani: z.string().min(1).max(200),
+      kurdish_badini: z.string().min(1).max(200),
       pronunciation: z.string().max(200).optional(),
-      example: z.string().max(500).optional(),
+      example_sentence: z.string().max(500).optional(),
       example_sorani: z.string().max(500).optional(),
       example_badini: z.string().max(500).optional(),
       audio_url: z.string().url().max(500).optional().or(z.literal("")),
@@ -174,7 +174,8 @@ export const adminUpsertVocab = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const payload = { ...data, audio_url: data.audio_url || null };
-    const { data: saved, error } = await context.supabase.from("vocab_words").upsert(payload).select().single();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: saved, error } = await context.supabase.from("vocab_words").upsert(payload as any).select().single();
     if (error) throw new Error(error.message);
     return { word: saved };
   });
