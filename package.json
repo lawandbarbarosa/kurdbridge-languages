@@ -12,6 +12,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@elevenlabs/react": "^1.9.1",
     "@fontsource-variable/manrope": "^5.2.8",
     "@fontsource-variable/sora": "^5.2.8",
     "@fontsource/noto-kufi-arabic": "^5.2.9",
