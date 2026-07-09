@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDialect } from "@/hooks/use-dialect";
 import { DialectToggle } from "@/components/dialect-toggle";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutDashboard, BookOpen, PlayCircle, Settings, LogOut } from "lucide-react";
+import { Sparkles, LayoutDashboard, BookOpen, PlayCircle, Settings, LogOut, Mic, Shield } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 
 interface Props {
   children: React.ReactNode;
