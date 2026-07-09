@@ -130,14 +130,15 @@ export const adminUpsertExercise = createServerFn({ method: "POST" })
       id: z.string().uuid().optional(),
       lesson_id: z.string().uuid(),
       order_index: z.number().int().min(0),
-      type: z.enum(["multiple_choice", "fill_blank", "translate", "listen"]),
+      type: z.enum(["multiple_choice", "fill_blank", "translate", "listening"]),
       prompt_json: z.record(z.string(), z.unknown()),
       answer_json: z.record(z.string(), z.unknown()),
     }).parse(d),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { data: saved, error } = await context.supabase.from("lesson_exercises").upsert(data).select().single();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: saved, error } = await context.supabase.from("lesson_exercises").upsert(data as any).select().single();
     if (error) throw new Error(error.message);
     return { exercise: saved };
   });
