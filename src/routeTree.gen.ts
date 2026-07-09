@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSpeakRouteImport } from './routes/_authenticated/speak'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSpeakRoute = AuthenticatedSpeakRouteImport.update({
+  id: '/speak',
+  path: '/speak',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/speak': typeof AuthenticatedSpeakRoute
   '/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/speak': typeof AuthenticatedSpeakRoute
   '/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -126,6 +134,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/speak': typeof AuthenticatedSpeakRoute
   '/_authenticated/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/_authenticated/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/_authenticated/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/onboarding'
     | '/settings'
+    | '/speak'
     | '/learn/$lang'
     | '/lesson/$id'
     | '/placement/$lang'
@@ -156,6 +166,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/onboarding'
     | '/settings'
+    | '/speak'
     | '/learn/$lang'
     | '/lesson/$id'
     | '/placement/$lang'
@@ -171,6 +182,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
+    | '/_authenticated/speak'
     | '/_authenticated/learn/$lang'
     | '/_authenticated/lesson/$id'
     | '/_authenticated/placement/$lang'
@@ -207,6 +219,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/speak': {
+      id: '/_authenticated/speak'
+      path: '/speak'
+      fullPath: '/speak'
+      preLoaderRoute: typeof AuthenticatedSpeakRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
@@ -286,6 +305,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSpeakRoute: typeof AuthenticatedSpeakRoute
   AuthenticatedLearnLangRoute: typeof AuthenticatedLearnLangRoute
   AuthenticatedLessonIdRoute: typeof AuthenticatedLessonIdRoute
   AuthenticatedPlacementLangRoute: typeof AuthenticatedPlacementLangRoute
@@ -299,6 +319,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSpeakRoute: AuthenticatedSpeakRoute,
   AuthenticatedLearnLangRoute: AuthenticatedLearnLangRoute,
   AuthenticatedLessonIdRoute: AuthenticatedLessonIdRoute,
   AuthenticatedPlacementLangRoute: AuthenticatedPlacementLangRoute,
