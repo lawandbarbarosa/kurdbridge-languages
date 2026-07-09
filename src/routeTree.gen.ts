@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSpeakRouteImport } from './routes/_authenticated/speak'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedVocabLangRouteImport } from './routes/_authenticated/vocab.$lang'
 import { Route as AuthenticatedVideosLangRouteImport } from './routes/_authenticated/videos.$lang'
 import { Route as AuthenticatedVideoIdRouteImport } from './routes/_authenticated/video.$id'
@@ -36,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedSpeakRoute = AuthenticatedSpeakRouteImport.update({
+  id: '/speak',
+  path: '/speak',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -49,6 +56,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedVocabLangRoute = AuthenticatedVocabLangRouteImport.update({
@@ -86,9 +98,11 @@ const AuthenticatedLearnLangRoute = AuthenticatedLearnLangRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/speak': typeof AuthenticatedSpeakRoute
   '/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -99,9 +113,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
+  '/speak': typeof AuthenticatedSpeakRoute
   '/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -114,9 +130,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/speak': typeof AuthenticatedSpeakRoute
   '/_authenticated/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/_authenticated/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/_authenticated/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -129,9 +147,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/admin'
     | '/dashboard'
     | '/onboarding'
     | '/settings'
+    | '/speak'
     | '/learn/$lang'
     | '/lesson/$id'
     | '/placement/$lang'
@@ -142,9 +162,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/admin'
     | '/dashboard'
     | '/onboarding'
     | '/settings'
+    | '/speak'
     | '/learn/$lang'
     | '/lesson/$id'
     | '/placement/$lang'
@@ -156,9 +178,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
+    | '/_authenticated/speak'
     | '/_authenticated/learn/$lang'
     | '/_authenticated/lesson/$id'
     | '/_authenticated/placement/$lang'
@@ -196,6 +220,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/speak': {
+      id: '/_authenticated/speak'
+      path: '/speak'
+      fullPath: '/speak'
+      preLoaderRoute: typeof AuthenticatedSpeakRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -215,6 +246,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/vocab/$lang': {
@@ -263,9 +301,11 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSpeakRoute: typeof AuthenticatedSpeakRoute
   AuthenticatedLearnLangRoute: typeof AuthenticatedLearnLangRoute
   AuthenticatedLessonIdRoute: typeof AuthenticatedLessonIdRoute
   AuthenticatedPlacementLangRoute: typeof AuthenticatedPlacementLangRoute
@@ -275,9 +315,11 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSpeakRoute: AuthenticatedSpeakRoute,
   AuthenticatedLearnLangRoute: AuthenticatedLearnLangRoute,
   AuthenticatedLessonIdRoute: AuthenticatedLessonIdRoute,
   AuthenticatedPlacementLangRoute: AuthenticatedPlacementLangRoute,

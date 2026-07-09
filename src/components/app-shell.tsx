@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDialect } from "@/hooks/use-dialect";
 import { DialectToggle } from "@/components/dialect-toggle";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutDashboard, BookOpen, PlayCircle, Settings, LogOut } from "lucide-react";
+import { Sparkles, LayoutDashboard, BookOpen, PlayCircle, Settings, LogOut, Mic, Shield } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 
 interface Props {
   children: React.ReactNode;
@@ -19,9 +20,16 @@ export function AppShell({ children, activeLang }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    supabase.auth.getUser().then(async ({ data }) => {
+      setEmail(data.user?.email ?? null);
+      if (data.user) {
+        const { data: r } = await supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" });
+        setIsAdmin(Boolean(r));
+      }
+    });
   }, []);
 
   async function onSignOut() {
@@ -41,6 +49,8 @@ export function AppShell({ children, activeLang }: Props) {
           { to: `/videos/${activeLang}`, label: t("videos"), icon: PlayCircle },
         ]
       : []),
+    { to: "/speak", label: t("speak"), icon: Mic },
+    ...(isAdmin ? [{ to: "/admin", label: t("admin"), icon: Shield }] : []),
   ];
 
   return (
