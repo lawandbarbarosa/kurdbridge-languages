@@ -49,6 +49,8 @@ export function AppShell({ children, activeLang }: Props) {
           { to: `/videos/${activeLang}`, label: t("videos"), icon: PlayCircle },
         ]
       : []),
+    { to: "/speak", label: t("speak"), icon: Mic },
+    ...(isAdmin ? [{ to: "/admin", label: t("admin"), icon: Shield }] : []),
   ];
 
   return (
