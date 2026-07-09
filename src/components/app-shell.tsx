@@ -20,9 +20,16 @@ export function AppShell({ children, activeLang }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [email, setEmail] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? null));
+    supabase.auth.getUser().then(async ({ data }) => {
+      setEmail(data.user?.email ?? null);
+      if (data.user) {
+        const { data: r } = await supabase.rpc("has_role", { _user_id: data.user.id, _role: "admin" });
+        setIsAdmin(Boolean(r));
+      }
+    });
   }, []);
 
   async function onSignOut() {
