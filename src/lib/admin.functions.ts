@@ -224,7 +224,7 @@ export const adminDeleteVideo = createServerFn({ method: "POST" })
 export const adminSetUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
-    z.object({ user_id: z.string().uuid(), role: z.enum(["admin", "moderator", "user"]), grant: z.boolean() }).parse(d),
+    z.object({ user_id: z.string().uuid(), role: z.enum(["admin", "user"]), grant: z.boolean() }).parse(d),
   )
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.rpc("admin_set_user_role", {
