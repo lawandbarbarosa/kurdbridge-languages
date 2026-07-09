@@ -1,76 +1,50 @@
+# Admin panel + Realtime speaking bot
 
-# Kurdish Language Learning Platform — MVP Plan
+## 1. Admin access (first-signup rule)
 
-A full scaffold covering all 6 phases at once: auth, placement test, CEFR level tree, vocab flashcards, video practice, progress/streaks — for all 4 target languages (English, German, Arabic, Korean) with a Kurdish Sorani/Badini UI toggle. Initial lesson/vocab content is AI-generated at build time and stored in the database so you can review and edit later.
+- Migration: trigger on `auth.users` insert — if `public.user_roles` is empty, insert `(new.id, 'admin')`. Later signups get no role by default.
+- Existing `has_role(uid, 'admin')` function drives everything.
+- Admin can be granted to others from the Admin → Users tab.
 
-## What you'll get
+### RLS updates for content tables
+Currently `lessons`, `videos`, `vocab_words`, `lesson_exercises`, `levels`, `languages` are read-only for users. Add admin-only INSERT/UPDATE/DELETE policies (`public.has_role(auth.uid(), 'admin')`).
 
-- Kurdish-first UI (RTL, Arabic script) with a Sorani ↔ Badini toggle in every screen.
-- Sign up / sign in with email + password and Google.
-- Onboarding: pick target language (EN / DE / AR / KO) → take a ~20 question placement test → land on A1/A2/B1 with the right lessons unlocked.
-- Learner dashboard: current level badge, streak, daily-goal ring, "continue lesson" card, and a visual lesson skill-tree with locked/unlocked/completed states.
-- Lessons: grammar explanation in Kurdish, example dialogue, exercises (multiple choice, fill-in-blank, listening), end-of-lesson quiz with 70% pass threshold to unlock the next node.
-- Vocabulary: word lists per level/topic, flashcard mode (target word → Kurdish meaning → example), simple spaced repetition (missed words resurface sooner), TTS pronunciation via Lovable AI.
-- Video practice: curated YouTube clips per level, line-by-line transcript with a Kurdish translation toggle, and an "attempt then reveal" mode.
-- Progress: per-language level, daily streak, lesson completion, vocab mastery counts.
+## 2. Admin page — `/admin`
 
-## Design step (before building UI)
+New pathless layout `_authenticated/_admin/route.tsx` — `beforeLoad` throws redirect to `/dashboard` unless the caller is admin (via a `getIsAdmin` server fn using `requireSupabaseAuth` + `has_role` RPC).
 
-Right after the plan is approved I'll:
-1. Ask three visual questions in one round — palette, typography pair, layout — so the taste is pinned.
-2. Generate 3 rendered design directions for the learner dashboard (RTL Kurdish, CEFR badge, lesson tree, streak) and let you pick one.
-3. Build the whole app against that chosen direction.
+Tabs (single page with sub-nav):
 
-## Build order (single scaffold, not staged shipping)
+- **Lessons** — pick language + level → list lessons; create/edit form (title, position, grammar markdown, dialogue JSON, quiz threshold). Add/remove exercises inline (type: multiple-choice / fill-blank / translate; prompt, answer, options).
+- **Vocabulary (Flashcards)** — pick language + level → list vocab; create/edit (word, translation_ku, pronunciation, example, example_ku, part_of_speech, audio_url).
+- **Videos** — pick language → list videos; create/edit (title, youtube_id, level, transcript, translation_ku, duration).
+- **Users** — list profiles + current admins; promote/demote toggle (uses admin-only `set_user_role` RPC).
 
-1. Enable Lovable Cloud; scaffold Kurdish (RTL) i18n with Sorani + Badini string tables.
-2. Auth: email/password + Google, profile row on signup, Kurdish-language auth screens.
-3. Database schema + AI content seeding migration (see Technical section).
-4. Onboarding: language pick → placement test → level assignment.
-5. Learner dashboard + lesson tree UI (using chosen design direction).
-6. Lesson runner (steps: intro → exercises → quiz → unlock next).
-7. Vocabulary flashcards with simple SRS + TTS.
-8. Video practice screen.
-9. Streak + daily goal + "continue where you left off".
-10. Polish, RTL audit, empty-states.
+All forms are dialect-aware and use existing shadcn `Dialog` + `Form` components. Header shows an Admin link only when `isAdmin` context is true.
 
-## Technical section
+## 3. Realtime speaking bot — `/speak`
 
-**Stack:** TanStack Start (existing), Lovable Cloud (Supabase) for auth/DB/storage, Lovable AI Gateway for content generation + TTS, `openai/gpt-5.5` for text, `openai/gpt-4o-mini-tts` for audio.
+New protected route `/_authenticated/speak.tsx`.
 
-**i18n:** lightweight in-repo dictionary (`src/i18n/{sorani,badini}.ts`), `dir="rtl"` on `<html>`, dialect stored in `profiles.ui_dialect`. No i18n library needed for MVP.
+- Uses ElevenLabs Conversational Agents via `@elevenlabs/react` `useConversation` hook (WebRTC).
+- Server fn `getElevenLabsToken` (auth-gated) fetches a WebRTC conversation token from `https://api.elevenlabs.io/v1/convai/conversation/token` using the connector-synced `ELEVENLABS_API_KEY`. Token is single-use, ~1min TTL — never exposed at build time.
+- Agent config is done **once in the ElevenLabs dashboard** with a system prompt like: *"You are an English tutor for Kurdish speakers. Chat naturally in English. When the user makes an English mistake, briefly correct it in Kurdish (script matches the user's chosen dialect) then continue the conversation in English."* — I'll give the user the exact prompt + link to paste in.
+- UI shows: mic button (start/end), live captions of both user + agent transcripts (from `onMessage` events), an "isSpeaking" indicator, and the Kurdish correction feed. Dialect-aware (Sorani/Badini/English UI).
 
-**Database (public schema, RLS on, GRANTs per rules):**
-- `profiles` (id → auth.users, display_name, ui_dialect, active_target_lang, streak_count, last_active_date)
-- `user_roles` + `app_role` enum + `has_role()` SECURITY DEFINER (per user-roles rules; admin role for content editing later)
-- `languages` (code PK: 'en'|'de'|'ar'|'ko', name_sorani, name_badini)
-- `levels` (id, language_code, cefr: 'A1'..'C2', order_index)
-- `lessons` (id, level_id, order_index, title_sorani, title_badini, grammar_md_sorani, grammar_md_badini, dialogue_json)
-- `lesson_exercises` (id, lesson_id, order_index, type, prompt_json, answer_json)
-- `user_lesson_progress` (user_id, lesson_id, score, passed, completed_at)
-- `vocab_words` (id, language_code, level_cefr, topic, word, kurdish_sorani, kurdish_badini, example_sentence, audio_url nullable)
-- `user_vocab_progress` (user_id, word_id, box, next_review_at) — Leitner-style SRS
-- `videos` (id, language_code, level_cefr, youtube_id, title, transcript_json — array of {t_start, text, sorani, badini})
-- `placement_questions` (id, language_code, difficulty_band, question_json, answer_json)
-- `placement_attempts` (id, user_id, language_code, score, assigned_cefr, taken_at)
+### Connector setup
+ElevenLabs is a standard connector. I'll trigger `standard_connectors--connect` for `elevenlabs` — you'll paste your ElevenLabs API key once and create an agent in their dashboard, then paste the agent ID into Settings → Speaking bot (stored in `profiles.elevenlabs_agent_id` per user? No — a single app-wide agent stored as `VITE_ELEVENLABS_AGENT_ID` env is simpler; I'll go with that).
 
-**Content seeding:** a migration inserts language/level rows and a one-shot server function (admin-gated via `has_role('admin')`) generates initial content per (language, A1) using `openai/gpt-5.5` structured output — 8 lessons, ~60 vocab words, 20 placement questions, and 3 hand-picked YouTube IDs per language with AI-generated Kurdish transcript translations. I'll run this once at the end of the build so the app opens with real content. TTS for vocab is generated lazily on first request and cached to Supabase Storage.
+## Deliverables
+- 1 migration (admin trigger, RLS, `set_user_role` RPC, `elevenlabs_agent_id` config)
+- 5 new routes: `_admin/route`, `_admin/index`, `_admin/lessons`, `_admin/vocab`, `_admin/videos`, `_admin/users`, plus `/speak`
+- Server functions: `getIsAdmin`, `adminUpsertLesson`, `adminUpsertVocab`, `adminUpsertVideo`, `adminSetUserRole`, `getElevenLabsToken`
+- i18n keys added to sorani/badini/english
+- Header shows Admin + Speak links when applicable
 
-**Server functions (`src/lib/*.functions.ts`):**
-- `startPlacement`, `submitPlacementAnswer`, `finalizePlacement`
-- `getDashboard(languageCode)`, `getLessonTree(languageCode)`
-- `getLesson(lessonId)`, `submitLessonQuiz(lessonId, answers)` → updates progress, unlocks next
-- `getDueFlashcards(languageCode)`, `reviewFlashcard(wordId, correct)`
-- `getVideo(id)`, `getVideosForLevel(languageCode)`
-- `ttsForWord(wordId)` — server-side call to Lovable AI TTS, cached to storage
-- Admin-only: `seedInitialContent(languageCode)`
+## Setup you'll do after I ship
+1. Approve migration.
+2. Approve ElevenLabs connector (I'll prompt).
+3. Create an agent at elevenlabs.io → Agents, paste the system prompt I'll give you, copy the agent ID.
+4. I'll add it as a public env var (`VITE_ELEVENLABS_AGENT_ID`) via a secret.
 
-**Routes:** `/auth`, `/onboarding`, `/_authenticated/dashboard`, `/_authenticated/placement/$lang`, `/_authenticated/learn/$lang`, `/_authenticated/lesson/$id`, `/_authenticated/vocab/$lang`, `/_authenticated/video/$id`, `/_authenticated/settings`. Uses the integration-managed `_authenticated` gate.
-
-**Security:** RLS everywhere; `user_*` tables scoped by `auth.uid()`; content tables (`lessons`, `vocab_words`, etc.) readable by `authenticated`, writable only by `admin` via `has_role`. Zod validation on every server fn input.
-
-## Deliberately out of scope for this MVP
-
-- Speaking/pronunciation grading, chat with AI tutor, leaderboards/social, mobile app, payments, admin CMS UI (edit content via DB for now), C1/C2 levels (schema supports them; content seeded only for A1 to keep first build tractable — A2/B1 seedable via same admin function later).
-
-Reply "approve" (or "looks good") to start with the design questions and build.
+Sound good? Reply "go" and I'll build it end-to-end.
