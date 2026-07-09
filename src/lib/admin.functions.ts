@@ -5,7 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const langEnum = z.enum(["en", "de", "ar", "ko"]);
 const cefrEnum = z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]);
 
-async function assertAdmin(context: { supabase: { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: unknown; error: unknown }> }; userId: string }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function assertAdmin(context: any) {
   const { data, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
   if (error) throw new Error("role check failed");
   if (!data) throw new Error("Forbidden");
