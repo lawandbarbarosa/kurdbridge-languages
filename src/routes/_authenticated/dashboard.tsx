@@ -24,7 +24,7 @@ function Dashboard() {
 
   useEffect(() => {
     if (!isLoading && data) {
-      console.log("[dashboard] data:", data);
+      (window as unknown as { __dash?: unknown }).__dash = data;
       if (!data.activeLang) navigate({ to: "/onboarding" });
     }
   }, [data, isLoading, navigate]);
