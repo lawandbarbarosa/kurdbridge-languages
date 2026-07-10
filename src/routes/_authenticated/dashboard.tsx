@@ -23,8 +23,9 @@ function Dashboard() {
   });
 
   useEffect(() => {
-    if (!isLoading && data && !data.activeLang) {
-      navigate({ to: "/onboarding" });
+    if (!isLoading && data) {
+      console.log("[dashboard] data:", data);
+      if (!data.activeLang) navigate({ to: "/onboarding" });
     }
   }, [data, isLoading, navigate]);
 
