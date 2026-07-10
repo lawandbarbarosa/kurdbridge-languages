@@ -35,15 +35,8 @@ function SpeakPage() {
     }
   }, [envAgent]);
 
-  const conversation = useConversation({
-    onConnect: () => toast.success(t("speak_ready")),
-    onDisconnect: () => setConnecting(false),
-    onError: (err: unknown) => { setConnecting(false); toast.error(String(err ?? "error")); },
-    onMessage: (msg: { source?: "user" | "ai"; message?: string }) => {
-      const role: "user" | "agent" = msg.source === "user" ? "user" : "agent";
-      if (msg.message) setLines((prev) => [...prev, { role, text: msg.message!, ts: Date.now() }]);
-    },
-  });
+  const conversation = { status: "disconnected" as const, isSpeaking: false, startSession: async (_: unknown) => "", endSession: async () => {} };
+  // const conversation = useConversation({ ... });
 
   useEffect(() => { linesRef.current?.scrollTo({ top: linesRef.current.scrollHeight, behavior: "smooth" }); }, [lines]);
 
