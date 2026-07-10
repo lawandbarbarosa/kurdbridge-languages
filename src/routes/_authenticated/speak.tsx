@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useConversation } from "@elevenlabs/react";
+import { useConversation, ConversationProvider } from "@elevenlabs/react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
@@ -14,8 +14,16 @@ import { getElevenLabsToken } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/speak")({
   ssr: false,
-  component: SpeakPage,
+  component: SpeakPageWrapper,
 });
+
+function SpeakPageWrapper() {
+  return (
+    <ConversationProvider>
+      <SpeakPage />
+    </ConversationProvider>
+  );
+}
 
 type Line = { role: "user" | "agent"; text: string; ts: number };
 
@@ -23,10 +31,17 @@ function SpeakPage() {
   const { t } = useDialect();
   const fetchToken = useServerFn(getElevenLabsToken);
   const envAgent = (import.meta.env.VITE_ELEVENLABS_AGENT_ID as string | undefined) ?? "";
-  const [agentId, setAgentId] = useState<string>(() => envAgent || (typeof window !== "undefined" ? localStorage.getItem("elevenlabs_agent_id") ?? "" : ""));
+  const [agentId, setAgentId] = useState<string>(envAgent);
   const [connecting, setConnecting] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const linesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!envAgent && typeof window !== "undefined") {
+      const stored = localStorage.getItem("elevenlabs_agent_id");
+      if (stored) setAgentId(stored);
+    }
+  }, [envAgent]);
 
   const conversation = useConversation({
     onConnect: () => toast.success(t("speak_ready")),
