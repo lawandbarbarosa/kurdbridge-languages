@@ -14,8 +14,16 @@ import { getElevenLabsToken } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/speak")({
   ssr: false,
-  component: SpeakPage,
+  component: SpeakPageWrapper,
 });
+
+function SpeakPageWrapper() {
+  return (
+    <ConversationProvider>
+      <SpeakPage />
+    </ConversationProvider>
+  );
+}
 
 type Line = { role: "user" | "agent"; text: string; ts: number };
 
