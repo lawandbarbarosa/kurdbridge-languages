@@ -53,7 +53,7 @@ export const getDashboard = createServerFn({ method: "POST" })
         recentLesson = { id: recent.lesson_id, title_sorani: recent.lessons.title_sorani, title_badini: recent.lessons.title_badini };
       }
     }
-    return { profile, languages: languages ?? [], activeLang, level: levelRow, recentLesson, dueCount, completedCount, wordsLearnedCount, _debug: { userId, profileFound: !!profile } };
+    return { profile, languages: languages ?? [], activeLang, level: levelRow, recentLesson, dueCount, completedCount, wordsLearnedCount };
   });
 
 /* -------------------- PROFILE -------------------- */
