@@ -23,10 +23,17 @@ function SpeakPage() {
   const { t } = useDialect();
   const fetchToken = useServerFn(getElevenLabsToken);
   const envAgent = (import.meta.env.VITE_ELEVENLABS_AGENT_ID as string | undefined) ?? "";
-  const [agentId, setAgentId] = useState<string>(() => envAgent || (typeof window !== "undefined" ? localStorage.getItem("elevenlabs_agent_id") ?? "" : ""));
+  const [agentId, setAgentId] = useState<string>(envAgent);
   const [connecting, setConnecting] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const linesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!envAgent && typeof window !== "undefined") {
+      const stored = localStorage.getItem("elevenlabs_agent_id");
+      if (stored) setAgentId(stored);
+    }
+  }, [envAgent]);
 
   const conversation = useConversation({
     onConnect: () => toast.success(t("speak_ready")),
