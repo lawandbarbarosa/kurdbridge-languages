@@ -304,7 +304,7 @@ function VideosTab() {
             <CardContent className="p-3 flex justify-between items-center">
               <div>
                 <div className="font-medium">{v.title}</div>
-                <div className="text-xs text-muted-foreground">{v.level_cefr} · YT: {v.youtube_id}</div>
+                <div className="text-xs text-muted-foreground">{v.level_cefr} · {v.video_path ? "uploaded" : v.youtube_id ? `YT: ${v.youtube_id}` : "no source"}</div>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => { setEditing(v as unknown as Record<string, unknown>); setOpen(true); }}>{t("edit")}</Button>
