@@ -26,6 +26,7 @@ import {
   adminUpsertVideo,
   adminDeleteVideo,
   adminSetUserRole,
+  transcribeVideoFile,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 
