@@ -349,10 +349,42 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
       <div><Label>YouTube ID</Label><Input value={(value.youtube_id ?? "") as string} onChange={(e) => set("youtube_id", e.target.value)} /></div>
       <div><Label>Description</Label><Textarea value={(value.description ?? "") as string} onChange={(e) => set("description", e.target.value)} /></div>
       <div><Label>Duration (seconds)</Label><Input type="number" value={(value.duration_seconds ?? 0) as number} onChange={(e) => set("duration_seconds", Number(e.target.value))} /></div>
-      <div>
-        <Label>Transcript JSON: [{"{"}"t","en","ku_sorani","ku_badini"{"}"}]</Label>
-        <Textarea rows={5} value={JSON.stringify(value.transcript_json ?? [], null, 2)} onChange={(e) => { try { set("transcript_json", JSON.parse(e.target.value)); } catch { /* */ } }} />
+      <TranscriptEditor
+        value={(value.transcript_json as TranscriptLine[]) ?? []}
+        onChange={(lines) => set("transcript_json", lines)}
+      />
+    </div>
+  );
+}
+
+interface TranscriptLine { t?: number; en: string; ku_sorani?: string; ku_badini?: string }
+
+function TranscriptEditor({ value, onChange }: { value: TranscriptLine[]; onChange: (v: TranscriptLine[]) => void }) {
+  const update = (i: number, patch: Partial<TranscriptLine>) => {
+    const next = value.slice();
+    next[i] = { ...next[i], ...patch };
+    onChange(next);
+  };
+  const add = () => onChange([...value, { en: "", ku_sorani: "", ku_badini: "" }]);
+  const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i));
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-center justify-between">
+        <Label>Transcript lines</Label>
+        <Button type="button" size="sm" variant="outline" onClick={add}>+ Add line</Button>
       </div>
+      {value.length === 0 && <p className="text-xs text-muted-foreground">No lines yet. Click "Add line" to start.</p>}
+      {value.map((line, i) => (
+        <div key={i} className="rounded-md border p-3 grid gap-2 bg-muted/30">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">Line {i + 1}</span>
+            <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>✕</Button>
+          </div>
+          <Input placeholder="English line" dir="ltr" value={line.en} onChange={(e) => update(i, { en: e.target.value })} />
+          <Input placeholder="Kurdish (Sorani) translation" value={line.ku_sorani ?? ""} onChange={(e) => update(i, { ku_sorani: e.target.value })} />
+          <Input placeholder="Kurdish (Badini) translation" value={line.ku_badini ?? ""} onChange={(e) => update(i, { ku_badini: e.target.value })} />
+        </div>
+      ))}
     </div>
   );
 }

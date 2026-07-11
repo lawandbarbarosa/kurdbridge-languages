@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/video/$id")({
   component: VideoView,
 });
 
-interface TranscriptLine { t_start?: number; text: string; sorani?: string; badini?: string }
+interface TranscriptLine { t?: number; en: string; ku_sorani?: string; ku_badini?: string }
 
 function VideoView() {
   const { id } = Route.useParams();
@@ -62,10 +62,10 @@ function VideoView() {
           ) : (
             transcript.map((line, i) => (
               <div key={i} className="border-r-4 border-primary/30 pr-4">
-                <div dir="ltr" className="text-base">{line.text}</div>
+                <div dir="ltr" className="text-base">{line.en}</div>
                 {showTr && (
                   <div className="mt-1 text-sm text-muted-foreground font-kurdish">
-                    {dialect === "sorani" ? line.sorani : line.badini}
+                    {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
                   </div>
                 )}
               </div>
