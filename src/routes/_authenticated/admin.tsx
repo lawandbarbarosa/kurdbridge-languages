@@ -295,7 +295,7 @@ function VideosTab() {
           <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
         </Select>
         <div className="flex-1" />
-        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: "A1", youtube_id: "", title: "", transcript_json: [] }); setOpen(true); }}>{t("add_new")}</Button>
+        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: "A1", title: "", video_path: "", youtube_id: "", transcript_json: [] }); setOpen(true); }}>{t("add_new")}</Button>
       </div>
       <div className="grid gap-2">
         {(q.data?.videos ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
