@@ -62,10 +62,10 @@ function VideoView() {
           ) : (
             transcript.map((line, i) => (
               <div key={i} className="border-r-4 border-primary/30 pr-4">
-                <div dir="ltr" className="text-base">{line.text}</div>
+                <div dir="ltr" className="text-base">{line.en}</div>
                 {showTr && (
                   <div className="mt-1 text-sm text-muted-foreground font-kurdish">
-                    {dialect === "sorani" ? line.sorani : line.badini}
+                    {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
                   </div>
                 )}
               </div>
