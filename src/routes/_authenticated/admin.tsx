@@ -422,8 +422,9 @@ function TranscriptEditor({ value, onChange }: { value: TranscriptLine[]; onChan
       {value.length === 0 && <p className="text-xs text-muted-foreground">No lines yet. Click "Add line" to start.</p>}
       {value.map((line, i) => (
         <div key={i} className="rounded-md border p-3 grid gap-2 bg-muted/30">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">Line {i + 1}</span>
+            <Input type="number" step="0.1" className="w-24 h-7" placeholder="t (s)" value={line.t ?? 0} onChange={(e) => update(i, { t: Number(e.target.value) })} />
             <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>✕</Button>
           </div>
           <Input placeholder="English line" dir="ltr" value={line.en} onChange={(e) => update(i, { en: e.target.value })} />
