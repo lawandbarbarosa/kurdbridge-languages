@@ -409,7 +409,8 @@ export type Database = {
           level_cefr: Database["public"]["Enums"]["cefr_level"]
           title: string
           transcript_json: Json
-          youtube_id: string
+          video_path: string | null
+          youtube_id: string | null
         }
         Insert: {
           created_at?: string
@@ -420,7 +421,8 @@ export type Database = {
           level_cefr: Database["public"]["Enums"]["cefr_level"]
           title: string
           transcript_json?: Json
-          youtube_id: string
+          video_path?: string | null
+          youtube_id?: string | null
         }
         Update: {
           created_at?: string
@@ -431,7 +433,8 @@ export type Database = {
           level_cefr?: Database["public"]["Enums"]["cefr_level"]
           title?: string
           transcript_json?: Json
-          youtube_id?: string
+          video_path?: string | null
+          youtube_id?: string | null
         }
         Relationships: [
           {

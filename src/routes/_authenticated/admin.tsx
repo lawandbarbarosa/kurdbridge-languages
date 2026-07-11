@@ -26,6 +26,7 @@ import {
   adminUpsertVideo,
   adminDeleteVideo,
   adminSetUserRole,
+  transcribeVideoFile,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -294,7 +295,7 @@ function VideosTab() {
           <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
         </Select>
         <div className="flex-1" />
-        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: "A1", youtube_id: "", title: "", transcript_json: [] }); setOpen(true); }}>{t("add_new")}</Button>
+        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: "A1", title: "", video_path: "", youtube_id: "", transcript_json: [] }); setOpen(true); }}>{t("add_new")}</Button>
       </div>
       <div className="grid gap-2">
         {(q.data?.videos ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
@@ -303,7 +304,7 @@ function VideosTab() {
             <CardContent className="p-3 flex justify-between items-center">
               <div>
                 <div className="font-medium">{v.title}</div>
-                <div className="text-xs text-muted-foreground">{v.level_cefr} · YT: {v.youtube_id}</div>
+                <div className="text-xs text-muted-foreground">{v.level_cefr} · {v.video_path ? "uploaded" : v.youtube_id ? `YT: ${v.youtube_id}` : "no source"}</div>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => { setEditing(v as unknown as Record<string, unknown>); setOpen(true); }}>{t("edit")}</Button>
@@ -329,6 +330,40 @@ function VideosTab() {
 
 function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
+  const [uploading, setUploading] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const transcribe = useServerFn(transcribeVideoFile);
+
+  const onUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() || "mp4";
+      const path = `${(value.language_code as string) || "en"}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("videos").upload(path, file, { upsert: false, contentType: file.type });
+      if (error) throw error;
+      set("video_path", path);
+      toast.success("Uploaded");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const onTranscribe = async () => {
+    if (!value.video_path) { toast.error("Upload a video first"); return; }
+    setTranscribing(true);
+    try {
+      const res = await transcribe({ data: { path: value.video_path as string } });
+      set("transcript_json", res.lines);
+      toast.success(`Transcribed ${res.lines.length} lines`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setTranscribing(false);
+    }
+  };
+
   return (
     <div className="grid gap-3">
       <div className="grid grid-cols-2 gap-2">
@@ -346,9 +381,20 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
         </div>
       </div>
       <div><Label>Title</Label><Input value={(value.title ?? "") as string} onChange={(e) => set("title", e.target.value)} /></div>
-      <div><Label>YouTube ID</Label><Input value={(value.youtube_id ?? "") as string} onChange={(e) => set("youtube_id", e.target.value)} /></div>
       <div><Label>Description</Label><Textarea value={(value.description ?? "") as string} onChange={(e) => set("description", e.target.value)} /></div>
-      <div><Label>Duration (seconds)</Label><Input type="number" value={(value.duration_seconds ?? 0) as number} onChange={(e) => set("duration_seconds", Number(e.target.value))} /></div>
+
+      <div className="rounded-md border p-3 bg-muted/30 grid gap-2">
+        <Label>Video file</Label>
+        <Input type="file" accept="video/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); }} />
+        {value.video_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.video_path as string}</p> : <p className="text-xs text-muted-foreground">MP4 recommended. Uploads go to the private videos bucket.</p>}
+        {uploading && <p className="text-xs">Uploading…</p>}
+        <div className="flex gap-2 mt-1">
+          <Button type="button" size="sm" variant="secondary" onClick={onTranscribe} disabled={!value.video_path || transcribing}>
+            {transcribing ? "Transcribing…" : "Auto-transcribe (ElevenLabs)"}
+          </Button>
+        </div>
+      </div>
+
       <TranscriptEditor
         value={(value.transcript_json as TranscriptLine[]) ?? []}
         onChange={(lines) => set("transcript_json", lines)}
@@ -376,8 +422,9 @@ function TranscriptEditor({ value, onChange }: { value: TranscriptLine[]; onChan
       {value.length === 0 && <p className="text-xs text-muted-foreground">No lines yet. Click "Add line" to start.</p>}
       {value.map((line, i) => (
         <div key={i} className="rounded-md border p-3 grid gap-2 bg-muted/30">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">Line {i + 1}</span>
+            <Input type="number" step="0.1" className="w-24 h-7" placeholder="t (s)" value={line.t ?? 0} onChange={(e) => update(i, { t: Number(e.target.value) })} />
             <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>✕</Button>
           </div>
           <Input placeholder="English line" dir="ltr" value={line.en} onChange={(e) => update(i, { en: e.target.value })} />
