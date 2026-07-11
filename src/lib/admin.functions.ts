@@ -197,7 +197,8 @@ export const adminUpsertVideo = createServerFn({ method: "POST" })
       id: z.string().uuid().optional(),
       language_code: langEnum,
       level_cefr: cefrEnum,
-      youtube_id: z.string().min(1).max(50),
+      youtube_id: z.string().max(50).optional().nullable(),
+      video_path: z.string().max(500).optional().nullable(),
       title: z.string().min(1).max(300),
       description: z.string().max(2000).optional(),
       duration_seconds: z.number().int().min(0).optional(),
@@ -206,9 +207,61 @@ export const adminUpsertVideo = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const { data: saved, error } = await context.supabase.from("videos").upsert(data).select().single();
+    const payload = { ...data, youtube_id: data.youtube_id || null, video_path: data.video_path || null };
+    const { data: saved, error } = await context.supabase.from("videos").upsert(payload).select().single();
     if (error) throw new Error(error.message);
     return { video: saved };
+  });
+
+/* -------------------- TRANSCRIBE UPLOADED VIDEO -------------------- */
+export const transcribeVideoFile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ path: z.string().min(1).max(500) }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) throw new Error("ElevenLabs is not connected");
+    const { data: file, error } = await context.supabase.storage.from("videos").download(data.path);
+    if (error || !file) throw new Error(error?.message || "Could not read uploaded video");
+
+    const fd = new FormData();
+    fd.append("file", file, data.path.split("/").pop() || "video.mp4");
+    fd.append("model_id", "scribe_v2");
+    fd.append("tag_audio_events", "false");
+    fd.append("diarize", "false");
+
+    const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+      method: "POST",
+      headers: { "xi-api-key": apiKey },
+      body: fd,
+    });
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Transcription failed [${res.status}]: ${body}`);
+    }
+    const json = (await res.json()) as { words?: Array<{ text: string; start: number; end: number; type?: string }> };
+    const words = (json.words ?? []).filter((w) => w.type !== "spacing" && w.text?.trim());
+
+    // Group words into lines: break on sentence-ending punctuation, long silences, or >14 words
+    const lines: Array<{ t: number; en: string }> = [];
+    let cur: typeof words = [];
+    let lastEnd = 0;
+    for (const w of words) {
+      const gap = cur.length ? w.start - lastEnd : 0;
+      if (cur.length >= 14 || gap > 1.2) {
+        if (cur.length) lines.push({ t: cur[0].start, en: cur.map((x) => x.text).join(" ").replace(/\s+([.,!?;:])/g, "$1").trim() });
+        cur = [];
+      }
+      cur.push(w);
+      lastEnd = w.end;
+      if (/[.!?]$/.test(w.text) && cur.length >= 3) {
+        lines.push({ t: cur[0].start, en: cur.map((x) => x.text).join(" ").replace(/\s+([.,!?;:])/g, "$1").trim() });
+        cur = [];
+      }
+    }
+    if (cur.length) lines.push({ t: cur[0].start, en: cur.map((x) => x.text).join(" ").replace(/\s+([.,!?;:])/g, "$1").trim() });
+
+    return { lines: lines.map((l) => ({ ...l, ku_sorani: "", ku_badini: "" })) };
   });
 
 export const adminDeleteVideo = createServerFn({ method: "POST" })
