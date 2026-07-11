@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/video/$id")({
   component: VideoView,
 });
 
-interface TranscriptLine { t_start?: number; text: string; sorani?: string; badini?: string }
+interface TranscriptLine { t?: number; en: string; ku_sorani?: string; ku_badini?: string }
 
 function VideoView() {
   const { id } = Route.useParams();
