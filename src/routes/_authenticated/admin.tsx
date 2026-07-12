@@ -424,9 +424,15 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
         <Input type="file" accept="video/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); }} />
         {value.video_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.video_path as string}</p> : <p className="text-xs text-muted-foreground">MP4 recommended. Uploads go to the private videos bucket.</p>}
         {uploading && <p className="text-xs">Uploading…</p>}
-        <div className="flex gap-2 mt-1">
+        <div className="flex gap-2 mt-1 flex-wrap">
           <Button type="button" size="sm" variant="secondary" onClick={onTranscribe} disabled={!value.video_path || transcribing}>
             {transcribing ? "Transcribing…" : "Auto-transcribe (ElevenLabs)"}
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={() => onTranslate(false)} disabled={translating || !((value.transcript_json as TranscriptLine[])?.length)}>
+            {translating ? "Translating…" : "Auto-translate empty → Kurdish"}
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => onTranslate(true)} disabled={translating || !((value.transcript_json as TranscriptLine[])?.length)}>
+            {translating ? "Translating…" : "Retranslate all"}
           </Button>
         </div>
       </div>
