@@ -267,6 +267,63 @@ export const transcribeVideoFile = createServerFn({ method: "POST" })
     return { lines: lines.map((l) => ({ ...l, ku_sorani: "", ku_badini: "" })) };
   });
 
+/* -------------------- AUTO-TRANSLATE TRANSCRIPT -------------------- */
+export const translateTranscriptLines = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      source_language: langEnum,
+      lines: z.array(z.object({ en: z.string() })).min(1).max(400),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Lovable AI is not connected");
+
+    const srcName = { en: "English", de: "German", ar: "Arabic", ko: "Korean" }[data.source_language];
+    const numbered = data.lines.map((l, i) => `${i + 1}. ${l.en}`).join("\n");
+
+    const body = {
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a professional translator for a Kurdish language-learning app. Translate each numbered source line into both Kurdish Sorani (Arabic script) and Kurdish Badini (Kurmanji, Latin script). Keep meaning natural, concise, and matched line-by-line. Return ONLY strict JSON.",
+        },
+        {
+          role: "user",
+          content: `Source language: ${srcName}. Translate every line. Return JSON of shape {"translations":[{"i":1,"sorani":"...","badini":"..."}, ...]} with the SAME count and order as input.\n\nLines:\n${numbered}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    };
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      if (res.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
+      if (res.status === 402) throw new Error("AI credits exhausted. Add credits in your workspace.");
+      throw new Error(`Translation failed [${res.status}]: ${t}`);
+    }
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const content = json.choices?.[0]?.message?.content ?? "{}";
+    let parsed: { translations?: Array<{ i?: number; sorani?: string; badini?: string }> } = {};
+    try { parsed = JSON.parse(content); } catch { throw new Error("AI returned invalid JSON"); }
+    const translations = parsed.translations ?? [];
+    const byIdx = new Map<number, { sorani: string; badini: string }>();
+    for (const t of translations) {
+      if (typeof t.i === "number") byIdx.set(t.i, { sorani: t.sorani ?? "", badini: t.badini ?? "" });
+    }
+    const out = data.lines.map((_, i) => byIdx.get(i + 1) ?? { sorani: "", badini: "" });
+    return { translations: out };
+  });
+
 export const adminDeleteVideo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
