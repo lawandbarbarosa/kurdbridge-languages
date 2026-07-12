@@ -366,6 +366,39 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
       setTranscribing(false);
     }
   };
+  const onTranslate = async (overwrite: boolean) => {
+    const lines = (value.transcript_json as TranscriptLine[]) ?? [];
+    const indices = lines
+      .map((l, i) => ({ l, i }))
+      .filter(({ l }) => l.en?.trim() && (overwrite || (!l.ku_sorani?.trim() && !l.ku_badini?.trim())));
+    if (indices.length === 0) { toast.error("No lines to translate"); return; }
+    setTranslating(true);
+    try {
+      const res = await translateFn({
+        data: {
+          source_language: (value.language_code as "en" | "de" | "ar" | "ko") || "en",
+          lines: indices.map(({ l }) => ({ en: l.en })),
+        },
+      });
+      const next = lines.slice();
+      indices.forEach(({ i }, k) => {
+        const tr = res.translations[k];
+        if (!tr) return;
+        next[i] = {
+          ...next[i],
+          ku_sorani: overwrite || !next[i].ku_sorani?.trim() ? tr.sorani : next[i].ku_sorani,
+          ku_badini: overwrite || !next[i].ku_badini?.trim() ? tr.badini : next[i].ku_badini,
+        };
+      });
+      set("transcript_json", next);
+      toast.success(`Translated ${indices.length} line${indices.length === 1 ? "" : "s"}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setTranslating(false);
+    }
+  };
+
 
   return (
     <div className="grid gap-3">
