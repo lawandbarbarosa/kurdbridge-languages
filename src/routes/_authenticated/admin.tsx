@@ -296,7 +296,7 @@ function VideosTab() {
           <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
         </Select>
         <div className="flex-1" />
-        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: "A1", title: "", video_path: "", youtube_id: "", transcript_json: [] }); setOpen(true); }}>{t("add_new")}</Button>
+        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: "A1", title: "", video_path: "", banner_path: "", youtube_id: "", transcript_json: [] }); setOpen(true); }}>{t("add_new")}</Button>
       </div>
       <div className="grid gap-2">
         {(q.data?.videos ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
@@ -332,6 +332,7 @@ function VideosTab() {
 function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
   const [uploading, setUploading] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [translating, setTranslating] = useState(false);
   const transcribe = useServerFn(transcribeVideoFile);
@@ -352,6 +353,26 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
       setUploading(false);
     }
   };
+
+  const onBannerUpload = async (file: File) => {
+    setUploadingBanner(true);
+    try {
+      const ext = file.name.split(".").pop() || "jpg";
+      const path = `${(value.language_code as string) || "en"}/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from("video-banners").upload(path, file, { upsert: false, contentType: file.type });
+      if (error) throw error;
+      set("banner_path", path);
+      toast.success("Banner uploaded");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setUploadingBanner(false);
+    }
+  };
+
+  const bannerPreviewUrl = value.banner_path
+    ? supabase.storage.from("video-banners").getPublicUrl(value.banner_path as string).data.publicUrl
+    : null;
 
   const onTranscribe = async () => {
     if (!value.video_path) { toast.error("Upload a video first"); return; }
@@ -418,6 +439,20 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
       </div>
       <div><Label>Title</Label><Input value={(value.title ?? "") as string} onChange={(e) => set("title", e.target.value)} /></div>
       <div><Label>Description</Label><Textarea value={(value.description ?? "") as string} onChange={(e) => set("description", e.target.value)} /></div>
+
+      <div className="rounded-md border p-3 bg-muted/30 grid gap-2">
+        <Label>Banner image</Label>
+        <Input type="file" accept="image/*" disabled={uploadingBanner} onChange={(e) => { const f = e.target.files?.[0]; if (f) onBannerUpload(f); }} />
+        {bannerPreviewUrl ? (
+          <div className="relative aspect-video rounded-md overflow-hidden bg-muted">
+            <img src={bannerPreviewUrl} alt="Banner preview" className="w-full h-full object-cover" />
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">JPG or PNG recommended. Shown on the videos page as the video thumbnail.</p>
+        )}
+        {value.banner_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.banner_path as string}</p> : null}
+        {uploadingBanner && <p className="text-xs">Uploading banner…</p>}
+      </div>
 
       <div className="rounded-md border p-3 bg-muted/30 grid gap-2">
         <Label>Video file</Label>

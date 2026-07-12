@@ -199,6 +199,7 @@ export const adminUpsertVideo = createServerFn({ method: "POST" })
       level_cefr: cefrEnum,
       youtube_id: z.string().max(50).optional().nullable(),
       video_path: z.string().max(500).optional().nullable(),
+      banner_path: z.string().max(500).optional().nullable(),
       title: z.string().min(1).max(300),
       description: z.string().max(2000).optional(),
       duration_seconds: z.number().int().min(0).optional(),
@@ -207,7 +208,7 @@ export const adminUpsertVideo = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const payload = { ...data, youtube_id: data.youtube_id || null, video_path: data.video_path || null };
+    const payload = { ...data, youtube_id: data.youtube_id || null, video_path: data.video_path || null, banner_path: data.banner_path || null };
     const { data: saved, error } = await context.supabase.from("videos").upsert(payload).select().single();
     if (error) throw new Error(error.message);
     return { video: saved };

@@ -3,11 +3,22 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getVideos } from "@/lib/learn.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { useDialect } from "@/hooks/use-dialect";
 import { AppShell } from "@/components/app-shell";
 import { Loader2, PlayCircle } from "lucide-react";
 
 const paramsSchema = z.object({ lang: z.enum(["en", "de", "ar", "ko"]) });
+
+function getVideoThumbnail(bannerPath: string | null | undefined, youtubeId: string | null | undefined): string | null {
+  if (bannerPath) {
+    return supabase.storage.from("video-banners").getPublicUrl(bannerPath).data.publicUrl;
+  }
+  if (youtubeId) {
+    return `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+  }
+  return null;
+}
 
 export const Route = createFileRoute("/_authenticated/videos/$lang")({
   parseParams: (p) => paramsSchema.parse(p),
@@ -33,15 +44,19 @@ function Videos() {
           <p className="text-muted-foreground">{t("no_words")}</p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {(data?.videos ?? []).map((v) => (
+            {(data?.videos ?? []).map((v) => {
+              const thumbnail = getVideoThumbnail(v.banner_path, v.youtube_id);
+              return (
               <Link key={v.id} to={`/video/${v.id}`} className="bento-card overflow-hidden hover:scale-[1.02] transition-transform">
                 <div className="relative aspect-video bg-muted">
-                  <img
-                    src={`https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`}
-                    alt={v.title}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
+                  {thumbnail ? (
+                    <img
+                      src={thumbnail}
+                      alt={v.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : null}
                   <div className="absolute inset-0 grid place-items-center bg-black/20">
                     <PlayCircle className="h-12 w-12 text-white drop-shadow-lg" />
                   </div>
@@ -52,7 +67,7 @@ function Videos() {
                   {v.description && <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{v.description}</div>}
                 </div>
               </Link>
-            ))}
+            );})}
           </div>
         )}
       </div>

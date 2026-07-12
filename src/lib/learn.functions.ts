@@ -329,7 +329,7 @@ export const getVideos = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ language: langEnum }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabase } = context;
-    const { data: videos } = await supabase.from("videos").select("id, youtube_id, title, description, level_cefr, duration_seconds").eq("language_code", data.language).order("level_cefr");
+    const { data: videos } = await supabase.from("videos").select("id, youtube_id, banner_path, title, description, level_cefr, duration_seconds").eq("language_code", data.language).order("level_cefr");
     return { videos: videos ?? [] };
   });
 

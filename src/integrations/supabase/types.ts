@@ -401,6 +401,7 @@ export type Database = {
       }
       videos: {
         Row: {
+          banner_path: string | null
           created_at: string
           description: string | null
           duration_seconds: number | null
@@ -413,6 +414,7 @@ export type Database = {
           youtube_id: string | null
         }
         Insert: {
+          banner_path?: string | null
           created_at?: string
           description?: string | null
           duration_seconds?: number | null
@@ -425,6 +427,7 @@ export type Database = {
           youtube_id?: string | null
         }
         Update: {
+          banner_path?: string | null
           created_at?: string
           description?: string | null
           duration_seconds?: number | null
