@@ -27,6 +27,7 @@ import {
   adminDeleteVideo,
   adminSetUserRole,
   transcribeVideoFile,
+  translateTranscriptLines,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -332,7 +333,9 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
   const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
   const [uploading, setUploading] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const transcribe = useServerFn(transcribeVideoFile);
+  const translateFn = useServerFn(translateTranscriptLines);
 
   const onUpload = async (file: File) => {
     setUploading(true);
@@ -363,6 +366,39 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
       setTranscribing(false);
     }
   };
+  const onTranslate = async (overwrite: boolean) => {
+    const lines = (value.transcript_json as TranscriptLine[]) ?? [];
+    const indices = lines
+      .map((l, i) => ({ l, i }))
+      .filter(({ l }) => l.en?.trim() && (overwrite || (!l.ku_sorani?.trim() && !l.ku_badini?.trim())));
+    if (indices.length === 0) { toast.error("No lines to translate"); return; }
+    setTranslating(true);
+    try {
+      const res = await translateFn({
+        data: {
+          source_language: (value.language_code as "en" | "de" | "ar" | "ko") || "en",
+          lines: indices.map(({ l }) => ({ en: l.en })),
+        },
+      });
+      const next = lines.slice();
+      indices.forEach(({ i }, k) => {
+        const tr = res.translations[k];
+        if (!tr) return;
+        next[i] = {
+          ...next[i],
+          ku_sorani: overwrite || !next[i].ku_sorani?.trim() ? tr.sorani : next[i].ku_sorani,
+          ku_badini: overwrite || !next[i].ku_badini?.trim() ? tr.badini : next[i].ku_badini,
+        };
+      });
+      set("transcript_json", next);
+      toast.success(`Translated ${indices.length} line${indices.length === 1 ? "" : "s"}`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setTranslating(false);
+    }
+  };
+
 
   return (
     <div className="grid gap-3">
@@ -388,9 +424,15 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
         <Input type="file" accept="video/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); }} />
         {value.video_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.video_path as string}</p> : <p className="text-xs text-muted-foreground">MP4 recommended. Uploads go to the private videos bucket.</p>}
         {uploading && <p className="text-xs">Uploading…</p>}
-        <div className="flex gap-2 mt-1">
+        <div className="flex gap-2 mt-1 flex-wrap">
           <Button type="button" size="sm" variant="secondary" onClick={onTranscribe} disabled={!value.video_path || transcribing}>
             {transcribing ? "Transcribing…" : "Auto-transcribe (ElevenLabs)"}
+          </Button>
+          <Button type="button" size="sm" variant="secondary" onClick={() => onTranslate(false)} disabled={translating || !((value.transcript_json as TranscriptLine[])?.length)}>
+            {translating ? "Translating…" : "Auto-translate empty → Kurdish"}
+          </Button>
+          <Button type="button" size="sm" variant="outline" onClick={() => onTranslate(true)} disabled={translating || !((value.transcript_json as TranscriptLine[])?.length)}>
+            {translating ? "Translating…" : "Retranslate all"}
           </Button>
         </div>
       </div>
