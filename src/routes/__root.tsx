@@ -17,11 +17,15 @@ import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4" dir="rtl">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-primary">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">لاپەڕەکە نەدۆزرایەوە</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <p className="mt-1 text-base text-foreground/80 font-kurdish" dir="rtl">لاپەڕەکە نەدۆزرایەوە</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          This page doesn't exist or has been moved.
+        </p>
+        <p className="text-sm text-muted-foreground font-kurdish" dir="rtl">
           ئەم لاپەڕەیە بوونی نییە یان گواستراوەتەوە.
         </p>
         <div className="mt-6">
@@ -29,7 +33,7 @@ function NotFoundComponent() {
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            بڕۆ بۆ سەرەکی
+            Go home / بڕۆ بۆ سەرەکی
           </Link>
         </div>
       </div>
@@ -45,12 +49,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4" dir="rtl">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          ئەم لاپەڕەیە بار نەبوو
+          This page didn't load
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1 text-base text-foreground/80 font-kurdish" dir="rtl">
+          ئەم لاپەڕەیە بار نەبوو
+        </p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          Something went wrong. You can try loading it again.
+        </p>
+        <p className="text-sm text-muted-foreground font-kurdish" dir="rtl">
           هەڵەیەک ڕوویدا. دەتوانیت هەوڵبدەیت دووبارە بار بکەیت.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -61,13 +71,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            دووبارە هەوڵبدە
+            Try again / دووبارە هەوڵبدە
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            بڕۆ بۆ سەرەکی
+            Go home / بڕۆ بۆ سەرەکی
           </a>
         </div>
       </div>

@@ -46,9 +46,8 @@ function VideoView() {
     return () => { cancel = true; };
   }, [videoPath]);
 
-  if (isLoading || !data) return <AppShell><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div></AppShell>;
-  const v = data.video;
-  const transcript: TranscriptLine[] = Array.isArray(v.transcript_json) ? (v.transcript_json as unknown as TranscriptLine[]) : [];
+  const v = data?.video;
+  const transcript: TranscriptLine[] = v && Array.isArray(v.transcript_json) ? (v.transcript_json as unknown as TranscriptLine[]) : [];
 
   // find active line: last line whose t <= currentTime
   const activeIdx = transcript.reduce((acc, l, i) => ((l.t ?? 0) <= currentTime + 0.05 ? i : acc), -1);
@@ -58,6 +57,8 @@ function VideoView() {
       lineRefs.current[activeIdx]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
   }, [activeIdx]);
+
+  if (isLoading || !data || !v) return <AppShell><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div></AppShell>;
 
   const seekTo = (sec: number) => {
     const el = videoRef.current;
