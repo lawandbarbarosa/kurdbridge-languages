@@ -333,7 +333,9 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
   const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
   const [uploading, setUploading] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const transcribe = useServerFn(transcribeVideoFile);
+  const translateFn = useServerFn(translateTranscriptLines);
 
   const onUpload = async (file: File) => {
     setUploading(true);
