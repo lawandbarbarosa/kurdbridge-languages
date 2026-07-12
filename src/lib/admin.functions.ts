@@ -224,9 +224,12 @@ export const transcribeVideoFile = createServerFn({ method: "POST" })
     const { data: file, error } = await context.supabase.storage.from("videos").download(data.path);
     if (error || !file) throw new Error(error?.message || "Could not read uploaded video");
 
+    const filename = data.path.split("/").pop() || "video.mp4";
+    // Cloudflare Workers: convert to ArrayBuffer so FormData/fetch streams it reliably
+    const buf = await file.arrayBuffer();
     const fd = new FormData();
-    fd.append("file", file, data.path.split("/").pop() || "video.mp4");
-    fd.append("model_id", "scribe_v2");
+    fd.append("file", new Blob([buf], { type: file.type || "video/mp4" }), filename);
+    fd.append("model_id", "scribe_v1");
     fd.append("tag_audio_events", "false");
     fd.append("diarize", "false");
 
