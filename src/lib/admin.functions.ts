@@ -202,7 +202,7 @@ export const adminUpsertVideo = createServerFn({ method: "POST" })
       banner_path: z.string().max(500).optional().nullable(),
       title: z.string().min(1).max(300),
       description: z.string().max(2000).optional(),
-      duration_seconds: z.number().int().min(0).optional(),
+      duration_seconds: z.number().int().min(0).nullable().optional(),
       transcript_json: z.array(z.object({ t: z.number().optional(), en: z.string(), ku_sorani: z.string().optional(), ku_badini: z.string().optional() })).default([]),
     }).parse(d),
   )
