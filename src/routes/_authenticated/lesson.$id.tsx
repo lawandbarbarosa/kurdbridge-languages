@@ -87,7 +87,7 @@ function LessonRunner() {
             </div>
           )}
           <div className="mt-8 flex justify-end">
-            <Button size="lg" className="gradient-emerald" onClick={() => setStep("exercises")} disabled={exercises.length === 0}>
+            <Button size="lg" className="gradient-brand" onClick={() => setStep("exercises")} disabled={exercises.length === 0}>
               <ArrowLeft className="ml-2 h-4 w-4" />
               {t("exercises")} ({exercises.length})
             </Button>
@@ -127,8 +127,8 @@ function LessonRunner() {
                     key={choice}
                     dir="ltr"
                     onClick={() => setAnswers((a) => ({ ...a, [ex.id]: choice }))}
-                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
-                      answers[ex.id] === choice ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 bg-card"
+                    className={`w-full text-left p-4 rounded-xl squircle border-2 transition-all ${
+                      answers[ex.id] === choice ? "border-primary-ink bg-primary/10" : "border-border hover:border-primary/40 bg-card"
                     }`}
                   >
                     {choice}
@@ -139,7 +139,7 @@ function LessonRunner() {
                   dir="ltr"
                   value={answers[ex.id] ?? ""}
                   onChange={(e) => setAnswers((a) => ({ ...a, [ex.id]: e.target.value }))}
-                  className="w-full p-4 rounded-xl border-2 border-border focus:border-primary outline-none bg-card"
+                  className="w-full p-4 rounded-xl squircle border-2 border-border focus:border-primary-ink outline-none bg-card"
                   placeholder="..."
                 />
               )}
@@ -151,12 +151,12 @@ function LessonRunner() {
               {t("back")}
             </Button>
             {isLast ? (
-              <Button onClick={() => submit.mutate()} disabled={!answered || submit.isPending} className="gradient-emerald">
+              <Button onClick={() => submit.mutate()} disabled={!answered || submit.isPending} className="gradient-brand">
                 {submit.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                 {t("submit")}
               </Button>
             ) : (
-              <Button onClick={() => setIdx((i) => i + 1)} disabled={!answered} className="gradient-emerald">
+              <Button onClick={() => setIdx((i) => i + 1)} disabled={!answered} className="gradient-brand">
                 {t("next")}
               </Button>
             )}
@@ -170,21 +170,21 @@ function LessonRunner() {
   return (
     <AppShell activeLang={langCode}>
       <div className="max-w-md mx-auto text-center py-16">
-        <div className={`h-24 w-24 mx-auto rounded-full grid place-items-center shadow-elegant ${result?.passed ? "gradient-emerald" : "bg-destructive/15"}`}>
+        <div className={`h-24 w-24 mx-auto rounded-full grid place-items-center shadow-elegant ${result?.passed ? "gradient-brand" : "bg-destructive/15"}`}>
           {result?.passed ? <CheckCircle2 className="h-12 w-12 text-primary-foreground" /> : <XCircle className="h-12 w-12 text-destructive" />}
         </div>
         <h1 className="mt-6 font-display text-3xl font-bold">
           {result?.passed ? t("lesson_passed") : t("lesson_failed")}
         </h1>
-        <div className="mt-4 text-6xl font-display font-bold text-primary">{result?.score}%</div>
+        <div className="mt-4 text-6xl font-display font-bold text-primary-ink">{result?.score}%</div>
         <p className="mt-2 text-muted-foreground">{result?.correct} / {result?.total}</p>
         {!result?.passed && <p className="mt-2 text-sm text-muted-foreground">{t("pass_threshold")}</p>}
 
         <div className="mt-8 flex justify-center gap-3">
           {result?.passed ? (
-            <Button asChild size="lg" className="gradient-emerald"><a href={`/learn/${langCode}`}><ArrowLeft className="ml-2 h-4 w-4" />{t("continue")}</a></Button>
+            <Button asChild size="lg" className="gradient-brand"><a href={`/learn/${langCode}`}><ArrowLeft className="ml-2 h-4 w-4" />{t("continue")}</a></Button>
           ) : (
-            <Button size="lg" onClick={() => { setStep("intro"); setIdx(0); setAnswers({}); setResult(null); }} className="gradient-emerald">
+            <Button size="lg" onClick={() => { setStep("intro"); setIdx(0); setAnswers({}); setResult(null); }} className="gradient-brand">
               <RotateCw className="ml-2 h-4 w-4" />
               {t("retry")}
             </Button>
