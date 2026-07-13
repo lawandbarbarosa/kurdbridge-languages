@@ -27,7 +27,7 @@ function Landing() {
       <header className="border-b border-border/60 backdrop-blur-sm bg-background/70 sticky top-0 z-40">
         <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 rounded-xl gradient-emerald grid place-items-center shadow-soft">
+            <div className="h-9 w-9 rounded-xl squircle gradient-brand grid place-items-center shadow-soft">
               <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-display text-xl font-semibold tracking-tight">{t("app_name")}</span>
@@ -55,18 +55,18 @@ function Landing() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="mx-auto max-w-6xl px-6 pt-20 pb-16 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-sm text-primary mb-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 py-1.5 text-sm text-primary-ink mb-8">
             <Sparkles className="h-3.5 w-3.5" />
             <span>{t("tagline")}</span>
           </div>
-          <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight text-primary">
+          <h1 className="text-5xl md:text-7xl font-display font-bold leading-tight text-primary-ink">
             {t("hero_title")}
           </h1>
           <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {t("hero_sub")}
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Button asChild size="lg" className="gradient-emerald shadow-elegant">
+            <Button asChild size="lg" className="gradient-brand shadow-elegant">
               <Link to={authed ? "/dashboard" : "/auth"} search={authed ? undefined : { mode: "signup" }}>
                 <ArrowLeft className="ml-2 h-4 w-4" />
                 {t("hero_cta")}
@@ -101,7 +101,7 @@ function Landing() {
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
     <div className="bento-card p-8">
-      <div className="h-12 w-12 rounded-xl bg-gold/15 text-primary grid place-items-center mb-5">
+      <div className="h-12 w-12 rounded-xl squircle bg-gold/15 text-primary-ink grid place-items-center mb-5">
         {icon}
       </div>
       <h3 className="font-display text-xl font-semibold mb-2">{title}</h3>
