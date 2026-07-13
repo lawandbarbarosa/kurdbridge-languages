@@ -13,13 +13,14 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { hydrateDialect } from "@/hooks/use-dialect";
+import { hydrateA11yTypeface } from "@/hooks/use-accessibility";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-primary">404</h1>
+        <h1 className="text-7xl font-bold text-primary-ink">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-1 text-base text-foreground/80 font-kurdish" dir="rtl">لاپەڕەکە نەدۆزرایەوە</p>
         <p className="mt-3 text-sm text-muted-foreground">
@@ -141,6 +142,7 @@ function RootComponent() {
 
   useEffect(() => {
     hydrateDialect();
+    hydrateA11yTypeface();
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
