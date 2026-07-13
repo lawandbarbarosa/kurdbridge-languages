@@ -83,7 +83,7 @@ function SpeakPage() {
   return (
     <AppShell>
       <div className="mb-6">
-        <h1 className="text-3xl font-display font-bold flex items-center gap-2"><Sparkles className="h-7 w-7 text-primary" />{t("speak_title")}</h1>
+        <h1 className="text-3xl font-display font-bold flex items-center gap-2"><Sparkles className="h-7 w-7 text-primary-ink" />{t("speak_title")}</h1>
         <p className="text-muted-foreground mt-1">{t("speak_sub")}</p>
       </div>
 
@@ -118,7 +118,7 @@ function SpeakPage() {
 
       <div>
         <h2 className="text-lg font-semibold mb-2">{t("speak_transcript")}</h2>
-        <div ref={linesRef} className="border rounded-lg p-4 max-h-96 overflow-y-auto space-y-2 bg-card">
+        <div ref={linesRef} className="border rounded-2xl squircle p-4 max-h-96 overflow-y-auto space-y-2 bg-card">
           {lines.length === 0 && <p className="text-muted-foreground text-sm">—</p>}
           {lines.map((l, i) => (
             <div key={i} className={`flex ${l.role === "user" ? "justify-end" : "justify-start"}`}>
