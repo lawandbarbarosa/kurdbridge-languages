@@ -100,6 +100,9 @@ export const badini: typeof sorani = {
   badini: "بادینی",
   english: "English",
   target_language: "زمانێ ئارمانجی",
+  accessibility: "شیاندن",
+  dyslexia_friendly: "فۆنتەکێ گونجاڤ بۆ دیسلێکسیا",
+  dyslexia_friendly_desc: "بۆشایا دناڤبەرا پیت و هێلا فراوان دکەت بۆ خوێندنەکا ئاسانتر",
 
   hero_title: "فێرکرنا زمانی، ژ چاڤێ کوردی ڤە",
   hero_sub: "ئینگلیزی، ئەلمانی، عەرەبی یان کۆری فێربە ب ڕێبەرەکێ تەمام ب زمانێ دایکێ",
