@@ -45,7 +45,7 @@ function Vocab() {
     return (
       <AppShell activeLang={lang}>
         <div className="max-w-md mx-auto text-center py-16">
-          <div className="h-20 w-20 mx-auto rounded-full gradient-emerald grid place-items-center">
+          <div className="h-20 w-20 mx-auto rounded-full gradient-brand grid place-items-center">
             <Check className="h-10 w-10 text-primary-foreground" />
           </div>
           <h1 className="mt-6 font-display text-2xl font-bold">{words.length === 0 ? t("no_due") : t("completed")}</h1>
@@ -91,7 +91,7 @@ function Vocab() {
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="text-5xl font-display font-bold" dir="ltr">{w.word}</div>
             <button onClick={playAudio} className="p-2 rounded-full hover:bg-accent" title={t("play_audio")}>
-              <Volume2 className="h-5 w-5 text-primary" />
+              <Volume2 className="h-5 w-5 text-primary-ink" />
             </button>
           </div>
           {revealed ? (
@@ -118,7 +118,7 @@ function Vocab() {
               <X className="ml-2 h-4 w-4" />
               {t("didnt_know")}
             </Button>
-            <Button size="lg" className="gradient-emerald" onClick={() => answer(true)} disabled={review.isPending}>
+            <Button size="lg" className="gradient-brand" onClick={() => answer(true)} disabled={review.isPending}>
               <Check className="ml-2 h-4 w-4" />
               {t("i_knew_it")}
             </Button>
