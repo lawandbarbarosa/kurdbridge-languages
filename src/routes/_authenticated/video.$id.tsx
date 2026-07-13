@@ -70,7 +70,7 @@ function VideoView() {
       <div className="max-w-4xl mx-auto">
         <h1 className="font-display text-2xl font-bold" dir="ltr">{v.title}</h1>
         {v.description && <p className="text-muted-foreground mt-1 text-sm">{v.description}</p>}
-        <div className="mt-5 aspect-video rounded-2xl overflow-hidden shadow-elegant bg-black">
+        <div className="mt-5 aspect-video rounded-2xl squircle overflow-hidden shadow-elegant bg-black">
           {videoPath ? (
             signedUrl ? (
               <video
@@ -119,7 +119,7 @@ function VideoView() {
                   className={cn(
                     "rounded-lg px-4 py-3 border-r-4 transition cursor-pointer",
                     active
-                      ? "bg-primary/10 border-primary shadow-sm"
+                      ? "bg-primary/15 border-primary-ink shadow-sm"
                       : "border-transparent hover:bg-muted/50",
                     videoPath ? "cursor-pointer" : "cursor-default",
                   )}
