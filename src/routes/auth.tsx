@@ -98,10 +98,10 @@ function AuthPage() {
   return (
     <div dir={dir} className="min-h-screen grid md:grid-cols-2">
       {/* Left visual */}
-      <div className="hidden md:flex flex-col justify-between p-10 gradient-emerald text-primary-foreground relative overflow-hidden">
+      <div className="hidden md:flex flex-col justify-between p-10 gradient-brand text-primary-foreground relative overflow-hidden">
         <Link to="/" className="flex items-center gap-2 relative z-10">
-          <div className="h-9 w-9 rounded-xl bg-gold grid place-items-center">
-            <Sparkles className="h-5 w-5 text-primary" />
+          <div className="h-9 w-9 rounded-xl squircle bg-gold grid place-items-center">
+            <Sparkles className="h-5 w-5 text-gold-foreground" />
           </div>
           <span className="font-display text-xl font-semibold">{t("app_name")}</span>
         </Link>
@@ -166,7 +166,7 @@ function AuthPage() {
                 <Label htmlFor="password">{t("password")}</Label>
                 <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} dir="ltr" required minLength={6} maxLength={128} />
               </div>
-              <Button type="submit" disabled={loading} className="w-full gradient-emerald">
+              <Button type="submit" disabled={loading} className="w-full gradient-brand">
                 {loading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                 {isSignup ? t("sign_up") : t("sign_in")}
               </Button>
@@ -177,7 +177,7 @@ function AuthPage() {
               <Link
                 to="/auth"
                 search={{ mode: isSignup ? "signin" : "signup" }}
-                className="text-primary font-medium hover:underline"
+                className="text-primary-ink font-medium hover:underline"
               >
                 {isSignup ? t("sign_in") : t("sign_up")}
               </Link>
