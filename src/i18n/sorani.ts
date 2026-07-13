@@ -107,6 +107,9 @@ const s = {
   badini: "بادینی",
   english: "English",
   target_language: "زمانی ئامانج",
+  accessibility: "شیاندن",
+  dyslexia_friendly: "فۆنتی گونجاو بۆ دیسلێکسیا",
+  dyslexia_friendly_desc: "بۆشایی نێوان پیت و هێڵەکان فراوان دەکات بۆ خوێندنەوەیەکی ئاسانتر",
 
   // Marketing / landing
   hero_title: "فێربوونی زمان، لە ڕوانگەیەکی کوردی",
