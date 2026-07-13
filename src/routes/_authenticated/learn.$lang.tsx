@@ -30,15 +30,15 @@ function Learn() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-baseline justify-between mb-8">
           <h1 className="font-display text-3xl font-bold">{t("lesson_tree")}</h1>
-          <div className="text-sm text-muted-foreground">{t("current_level")}: <span className="font-bold text-primary">{data?.currentCefr}</span></div>
+          <div className="text-sm text-muted-foreground">{t("current_level")}: <span className="font-bold text-primary-ink">{data?.currentCefr}</span></div>
         </div>
 
         <div className="space-y-10">
           {(data?.tree ?? []).map((lvl) => (
             <div key={lvl.id}>
               <div className="flex items-center gap-3 mb-4">
-                <div className={`h-12 w-12 rounded-2xl grid place-items-center font-display text-xl font-bold ${
-                  lvl.unlocked ? "gradient-emerald text-primary-foreground" : "bg-muted text-muted-foreground"
+                <div className={`h-12 w-12 rounded-2xl squircle grid place-items-center font-display text-xl font-bold ${
+                  lvl.unlocked ? "gradient-brand text-primary-foreground" : "bg-muted text-muted-foreground"
                 }`}>
                   {lvl.cefr}
                 </div>
@@ -73,9 +73,9 @@ function LessonNode({ lesson, dialect, disabled }: {
 
   const inner = (
     <div className={`bento-card p-5 flex items-start gap-4 ${disabled ? "opacity-50" : "hover:scale-[1.01] transition-transform"}`}>
-      <div className={`h-11 w-11 rounded-xl grid place-items-center shrink-0 ${
-        lesson.passed ? "bg-success/15 text-success" :
-        lesson.unlocked ? "bg-gold/15 text-gold" :
+      <div className={`h-11 w-11 rounded-xl squircle grid place-items-center shrink-0 ${
+        lesson.passed ? "bg-success/15 text-success-ink" :
+        lesson.unlocked ? "bg-gold/15 text-gold-ink" :
         "bg-muted text-muted-foreground"
       }`}>
         {lesson.passed ? <CheckCircle2 className="h-5 w-5" /> :
@@ -85,7 +85,7 @@ function LessonNode({ lesson, dialect, disabled }: {
       <div className="flex-1 min-w-0">
         <div className="font-display font-semibold">{title}</div>
         {summary && <div className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{summary}</div>}
-        {lesson.passed && <div className="text-xs text-success mt-2">{lesson.score}%</div>}
+        {lesson.passed && <div className="text-xs text-success-ink mt-2">{lesson.score}%</div>}
       </div>
     </div>
   );
