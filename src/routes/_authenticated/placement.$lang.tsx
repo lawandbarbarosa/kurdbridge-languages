@@ -54,16 +54,16 @@ function Placement() {
     return (
       <AppShell>
         <div className="max-w-lg mx-auto text-center py-16">
-          <div className="h-20 w-20 mx-auto rounded-full gradient-emerald grid place-items-center shadow-elegant">
+          <div className="h-20 w-20 mx-auto rounded-full gradient-brand grid place-items-center shadow-elegant">
             <CheckCircle2 className="h-10 w-10 text-primary-foreground" />
           </div>
           <h1 className="mt-6 font-display text-3xl font-bold">{t("placement_result")}</h1>
           <p className="mt-2 text-muted-foreground">{t("your_score")}: {result.score} / {result.total}</p>
           <div className="mt-8 bento-card p-8">
             <p className="text-sm text-muted-foreground">{t("placement_assigned")}</p>
-            <div className="mt-2 font-display text-6xl font-bold text-primary">{result.assigned}</div>
+            <div className="mt-2 font-display text-6xl font-bold text-primary-ink">{result.assigned}</div>
           </div>
-          <Button asChild size="lg" className="mt-8 gradient-emerald">
+          <Button asChild size="lg" className="mt-8 gradient-brand">
             <a href="/dashboard"><ArrowLeft className="ml-2 h-4 w-4" />{t("go_to_dashboard")}</a>
           </Button>
         </div>
@@ -105,9 +105,9 @@ function Placement() {
                 key={choice}
                 onClick={() => setAnswers((a) => ({ ...a, [q.id]: choice }))}
                 dir="ltr"
-                className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                className={`w-full text-left p-4 rounded-xl squircle border-2 transition-all ${
                   answers[q.id] === choice
-                    ? "border-primary bg-primary/5"
+                    ? "border-primary-ink bg-primary/10"
                     : "border-border hover:border-primary/40 bg-card"
                 }`}
               >
@@ -122,12 +122,12 @@ function Placement() {
             {t("back")}
           </Button>
           {isLast ? (
-            <Button onClick={() => submit.mutate()} disabled={!answered || submit.isPending} className="gradient-emerald">
+            <Button onClick={() => submit.mutate()} disabled={!answered || submit.isPending} className="gradient-brand">
               {submit.isPending && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
               {t("submit")}
             </Button>
           ) : (
-            <Button onClick={() => setIdx((i) => i + 1)} disabled={!answered} className="gradient-emerald">
+            <Button onClick={() => setIdx((i) => i + 1)} disabled={!answered} className="gradient-brand">
               {t("next")}
             </Button>
           )}
