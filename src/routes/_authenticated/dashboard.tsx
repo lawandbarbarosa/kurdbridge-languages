@@ -29,7 +29,7 @@ function Dashboard() {
   }, [data, isLoading, navigate]);
 
   if (isLoading || !data) {
-    return <AppShell><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div></AppShell>;
+    return <AppShell><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary-ink" /></div></AppShell>;
   }
 
   const lang = (data.languages ?? []).find((l) => l.code === data.activeLang);
@@ -50,9 +50,9 @@ function Dashboard() {
               key={l.code}
               to="/dashboard"
               search={{ language: l.code as never }}
-              className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+              className={`px-3 py-1.5 rounded-lg squircle text-sm border transition-colors ${
                 l.code === data.activeLang
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "bg-primary text-primary-foreground border-primary-ink"
                   : "border-border bg-card hover:bg-accent"
               }`}
               onClick={(e) => { e.preventDefault(); /* nav is per-language switch, handled by mutation elsewhere */ }}
@@ -84,14 +84,14 @@ function Dashboard() {
             </p>
             <div className="mt-6 flex gap-3">
               {data.recentLesson ? (
-                <Button asChild size="lg" className="gradient-emerald shadow-elegant">
+                <Button asChild size="lg" className="gradient-brand shadow-elegant">
                   <Link to={`/lesson/${data.recentLesson.id}`}>
                     <ArrowLeft className="ml-2 h-4 w-4" />
                     {t("continue")}
                   </Link>
                 </Button>
               ) : (
-                <Button asChild size="lg" className="gradient-emerald shadow-elegant">
+                <Button asChild size="lg" className="gradient-brand shadow-elegant">
                   <Link to={`/learn/${data.activeLang}`}>
                     <ArrowLeft className="ml-2 h-4 w-4" />
                     {t("start")}
@@ -106,7 +106,7 @@ function Dashboard() {
         </div>
 
         {/* Streak */}
-        <div className="md:col-span-2 bento-card p-6 gradient-gold">
+        <div className="md:col-span-2 bento-card p-6 gradient-sun">
           <Flame className="h-6 w-6" />
           <div className="mt-3 text-4xl font-display font-bold">{data.profile?.streak_count ?? 0}</div>
           <div className="text-sm mt-1 opacity-80">{t("streak")} • {t("days")}</div>
@@ -114,8 +114,8 @@ function Dashboard() {
 
         {/* Level badge */}
         <div className="md:col-span-2 bento-card p-6">
-          <Trophy className="h-6 w-6 text-gold" />
-          <div className="mt-3 text-4xl font-display font-bold text-primary">
+          <Trophy className="h-6 w-6 text-gold-ink" />
+          <div className="mt-3 text-4xl font-display font-bold text-primary-ink">
             {data.level?.current_cefr ?? "A1"}
           </div>
           <div className="text-sm mt-1 text-muted-foreground">{t("current_level")} • {langLabel}</div>
@@ -148,7 +148,7 @@ function Dashboard() {
             <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("vocabulary")}</div>
             <div className="mt-1 font-display text-xl font-semibold">{t("flashcards")}</div>
           </div>
-          <BookOpen className="h-8 w-8 text-primary" />
+          <BookOpen className="h-8 w-8 text-primary-ink" />
         </Link>
 
         {/* Videos quick access */}
@@ -157,7 +157,7 @@ function Dashboard() {
             <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("videos")}</div>
             <div className="mt-1 font-display text-xl font-semibold">{t("video_practice")}</div>
           </div>
-          <PlayCircle className="h-8 w-8 text-primary" />
+          <PlayCircle className="h-8 w-8 text-primary-ink" />
         </Link>
       </div>
     </AppShell>
