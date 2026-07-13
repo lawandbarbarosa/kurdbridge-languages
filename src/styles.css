@@ -3,11 +3,32 @@
 @import "tw-animate-css";
 @import "@fontsource-variable/sora";
 @import "@fontsource-variable/manrope";
+@import "@fontsource-variable/atkinson-hyperlegible-next";
 @import "@fontsource/noto-kufi-arabic/400.css";
 @import "@fontsource/noto-kufi-arabic/500.css";
 @import "@fontsource/noto-kufi-arabic/700.css";
 
 @custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   بەتلیس (Betlîs) — Brand Design System
+   --------------------------------------------------------------------------
+   4 primary brand colors (backgrounds / major elements only — never body text):
+     Main Purple  #BEC8FF  -> --primary
+     Light Yellow #FFF050  -> --gold      (kept the "gold" name: it still reads
+                                            as the achievement/trophy/streak
+                                            color, just re-pointed to the new hex)
+     Soft Pink    #F5A0D2  -> --accent
+     Soft Green   #C8DF87  -> --success
+
+   Rule: text ON TOP of any of the 4 brand surfaces is solid black (#000).
+   Rule: these 4 tokens + their black foregrounds are IDENTICAL in light and
+   dark mode — brand color never shifts with theme, only the neutral chrome
+   around it does.
+   Rule: anywhere brand purple/pink is needed as *text* (links, small ink
+   accents) use --primary-ink / --accent-ink instead of --primary/--accent,
+   since the raw pastels fail WCAG contrast as text-on-white.
+   ========================================================================== */
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -20,6 +41,7 @@
   --font-display: "Sora Variable", "Noto Kufi Arabic", sans-serif;
   --font-sans: "Manrope Variable", "Noto Kufi Arabic", sans-serif;
   --font-kurdish: "Noto Kufi Arabic", "Manrope Variable", sans-serif;
+  --font-accessible: "Atkinson Hyperlegible Next Variable", "Manrope Variable", sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -29,6 +51,7 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-ink: var(--primary-ink);
   --color-primary-glow: var(--primary-glow);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -36,12 +59,15 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-accent-ink: var(--accent-ink);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
+  --color-gold-ink: var(--gold-ink);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-ink: var(--success-ink);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -62,102 +88,149 @@
 }
 
 :root {
-  --radius: 0.875rem;
+  /* Bumped up from 0.875rem so the squircle superellipse curve (see
+     `.squircle` utility below) reads clearly instead of collapsing into a
+     plain circular pill at typical button/card sizes. */
+  --radius: 1.25rem;
 
-  /* Emerald & Gold palette on warm cream */
-  --background: oklch(0.972 0.023 92);          /* #f5f0e0 warm cream */
-  --foreground: oklch(0.23 0.05 165);           /* deep emerald ink */
+  /* ---- The 4 brand colors, verbatim ---- */
+  --brand-purple: #bec8ff;
+  --brand-yellow: #fff050;
+  --brand-pink: #f5a0d2;
+  --brand-green: #c8df87;
 
-  --card: oklch(0.985 0.014 92);
-  --card-foreground: oklch(0.23 0.05 165);
+  /* ---- Neutral canvas (kept light + barely purple-tinted so the 4 brand
+     colors read as deliberate, saturated accents on top of it) ---- */
+  --background: #fafafe;
+  --foreground: #15131f;
 
-  --popover: oklch(0.985 0.014 92);
-  --popover-foreground: oklch(0.23 0.05 165);
+  --card: #ffffff;
+  --card-foreground: var(--foreground);
 
-  --primary: oklch(0.36 0.09 165);              /* #064e3b deep emerald */
-  --primary-foreground: oklch(0.972 0.023 92);
-  --primary-glow: oklch(0.52 0.12 165);         /* #0d7a5f mid emerald */
+  --popover: #ffffff;
+  --popover-foreground: var(--foreground);
 
-  --secondary: oklch(0.94 0.02 92);
-  --secondary-foreground: oklch(0.28 0.06 165);
+  /* ---- Primary = Main Purple ---- */
+  --primary: var(--brand-purple);
+  --primary-foreground: #000000;
+  /* Accessible, same-hue dark ink for use as *text* (links, active labels)
+     — never use --primary itself as a text color, it fails contrast on white. */
+  --primary-ink: color-mix(in oklch, var(--brand-purple) 45%, #05061a);
+  --primary-glow: color-mix(in oklch, var(--brand-purple) 70%, white);
 
-  --muted: oklch(0.93 0.018 92);
-  --muted-foreground: oklch(0.48 0.03 165);
+  --secondary: color-mix(in oklch, var(--brand-purple) 20%, white);
+  --secondary-foreground: var(--foreground);
 
-  --accent: oklch(0.94 0.03 88);
-  --accent-foreground: oklch(0.28 0.06 165);
+  --muted: #f1f0f8;
+  --muted-foreground: #6b697a;
 
-  --gold: oklch(0.78 0.12 88);                  /* #c9a84c gold */
-  --gold-foreground: oklch(0.23 0.05 165);
+  /* ---- Accent = Soft Pink ---- */
+  --accent: var(--brand-pink);
+  --accent-foreground: #000000;
+  --accent-ink: color-mix(in oklch, var(--brand-pink) 55%, #1a0512);
 
-  --success: oklch(0.55 0.14 155);
-  --success-foreground: oklch(0.98 0.01 92);
+  /* ---- "Gold" = Light Yellow (name kept for the achievement/streak
+     metaphor; hex re-pointed to brand) ---- */
+  --gold: var(--brand-yellow);
+  --gold-foreground: #000000;
+  /* Yellow fails as icon/text color on a light canvas the same way the
+     other pastels do — same-hue dark ink for that use case. */
+  --gold-ink: color-mix(in oklch, var(--brand-yellow) 55%, #1a1600);
+
+  /* ---- Success = Soft Green ---- */
+  --success: var(--brand-green);
+  --success-foreground: #000000;
+  --success-ink: color-mix(in oklch, var(--brand-green) 45%, #05140a);
 
   --destructive: oklch(0.55 0.19 27);
   --destructive-foreground: oklch(0.98 0.01 92);
 
-  --border: oklch(0.88 0.024 92);
-  --input: oklch(0.9 0.02 92);
-  --ring: oklch(0.52 0.12 165);
+  --border: #e6e4f0;
+  --input: #dcdaec;
+  --ring: var(--primary-ink);
 
-  --chart-1: oklch(0.36 0.09 165);
-  --chart-2: oklch(0.78 0.12 88);
-  --chart-3: oklch(0.52 0.12 165);
-  --chart-4: oklch(0.55 0.14 40);
-  --chart-5: oklch(0.65 0.1 200);
+  --chart-1: var(--brand-purple);
+  --chart-2: var(--brand-pink);
+  --chart-3: var(--brand-green);
+  --chart-4: color-mix(in oklch, var(--brand-yellow) 85%, black 8%);
+  --chart-5: var(--primary-ink);
 
-  --sidebar: oklch(0.985 0.014 92);
-  --sidebar-foreground: oklch(0.23 0.05 165);
-  --sidebar-primary: oklch(0.36 0.09 165);
-  --sidebar-primary-foreground: oklch(0.972 0.023 92);
-  --sidebar-accent: oklch(0.94 0.03 88);
-  --sidebar-accent-foreground: oklch(0.28 0.06 165);
-  --sidebar-border: oklch(0.88 0.024 92);
-  --sidebar-ring: oklch(0.52 0.12 165);
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--brand-purple);
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: var(--brand-pink);
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--primary-ink);
 
-  --gradient-emerald: linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 100%);
-  --gradient-gold: linear-gradient(135deg, oklch(0.82 0.13 88) 0%, oklch(0.7 0.14 75) 100%);
-  --shadow-elegant: 0 20px 50px -20px oklch(0.36 0.09 165 / 0.28);
-  --shadow-soft: 0 4px 16px -4px oklch(0.36 0.09 165 / 0.12);
+  --gradient-brand: linear-gradient(135deg, var(--brand-purple) 0%, var(--brand-pink) 100%);
+  --gradient-sun: linear-gradient(135deg, var(--brand-yellow) 0%, var(--brand-green) 100%);
+  --shadow-elegant: 0 24px 60px -20px rgba(42, 63, 201, 0.3);
+  --shadow-soft: 0 4px 20px -6px rgba(42, 63, 201, 0.16);
+
+  /* A white "light mask" for laying a soft highlight over any solid brand
+     surface (icon badges, hero blobs, hover sheens). Kept inside the
+     20%–30% opacity band on purpose — any lighter and it stops reading as
+     a mask, any darker and it stops reading as "light". */
+  --overlay-mask: rgb(255 255 255 / 0.25);
 }
 
 .dark {
-  --background: oklch(0.18 0.03 165);
-  --foreground: oklch(0.96 0.02 92);
-  --card: oklch(0.23 0.04 165);
-  --card-foreground: oklch(0.96 0.02 92);
-  --popover: oklch(0.23 0.04 165);
-  --popover-foreground: oklch(0.96 0.02 92);
-  --primary: oklch(0.62 0.14 165);
-  --primary-foreground: oklch(0.18 0.03 165);
-  --primary-glow: oklch(0.72 0.14 165);
-  --secondary: oklch(0.27 0.05 165);
-  --secondary-foreground: oklch(0.96 0.02 92);
-  --muted: oklch(0.27 0.05 165);
-  --muted-foreground: oklch(0.72 0.03 92);
-  --accent: oklch(0.32 0.06 88);
-  --accent-foreground: oklch(0.96 0.02 92);
-  --gold: oklch(0.78 0.13 88);
-  --gold-foreground: oklch(0.18 0.03 165);
-  --success: oklch(0.7 0.15 155);
-  --success-foreground: oklch(0.18 0.03 165);
+  --background: #15131f;
+  --foreground: #f4f3fa;
+  --card: #1e1c2c;
+  --card-foreground: var(--foreground);
+  --popover: #1e1c2c;
+  --popover-foreground: var(--foreground);
+
+  /* The 4 brand colors + their black foregrounds are intentionally left
+     unset here — they inherit the exact same values as :root. Brand color
+     never shifts between themes, only the neutral chrome does. */
+  --primary-ink: var(--brand-purple);
+  --primary-glow: color-mix(in oklch, var(--brand-purple) 60%, white);
+  --accent-ink: var(--brand-pink);
+  --gold-ink: var(--brand-yellow);
+  --success-ink: var(--brand-green);
+
+  --secondary: color-mix(in oklch, var(--brand-purple) 18%, black);
+  --secondary-foreground: var(--foreground);
+
+  --muted: #272536;
+  --muted-foreground: #a5a3b8;
+
   --destructive: oklch(0.65 0.2 22);
   --destructive-foreground: oklch(0.96 0.02 92);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.62 0.14 165);
+
+  --border: rgb(255 255 255 / 12%);
+  --input: rgb(255 255 255 / 16%);
+  --ring: var(--brand-purple);
+
+  --chart-5: var(--brand-purple);
+
+  --sidebar: #1e1c2c;
+  --sidebar-foreground: var(--foreground);
+  --sidebar-border: rgb(255 255 255 / 12%);
+  --sidebar-ring: var(--brand-purple);
+
+  --shadow-elegant: 0 24px 60px -20px rgba(0, 0, 0, 0.55);
+  --shadow-soft: 0 4px 20px -6px rgba(0, 0, 0, 0.4);
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html { font-family: var(--font-sans); }
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    font-family: var(--font-sans);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(circle at 15% 10%, oklch(0.78 0.12 88 / 0.08) 0%, transparent 45%),
-      radial-gradient(circle at 85% 90%, oklch(0.36 0.09 165 / 0.08) 0%, transparent 50%);
+      radial-gradient(circle at 15% 10%, color-mix(in oklch, var(--brand-purple) 30%, transparent) 0%, transparent 45%),
+      radial-gradient(circle at 85% 90%, color-mix(in oklch, var(--brand-pink) 26%, transparent) 0%, transparent 50%);
     background-attachment: fixed;
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
@@ -165,21 +238,85 @@
   [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4 { font-family: var(--font-kurdish); letter-spacing: 0; }
 }
 
+/* ==========================================================================
+   Accessibility: dyslexia-friendly typeface toggle
+   --------------------------------------------------------------------------
+   Toggled via `useAccessibility()` (src/hooks/use-accessibility.ts), which
+   sets data-a11y-typeface="dyslexic" on <html>. Deliberately does NOT change
+   the fixed type-scale (text-sm/base/lg/xl/... stay put) — only spacing,
+   weight and (for Latin script only) letter-spacing change, so headings and
+   body copy stay legible and laid out identically either way.
+
+   Letter/word-spacing is scoped to :not([dir="rtl"]) — added tracking on
+   connected Arabic-script Kurdish (Sorani) letterforms breaks the joins
+   between letters, which hurts legibility rather than helping it. Sorani
+   already renders in Noto Kufi Arabic, a flat/geometric Kufic-style face
+   chosen for exactly this kind of clarity, so it's left as-is.
+   ========================================================================== */
+[data-a11y-typeface="dyslexic"] {
+  line-height: 1.7;
+}
+[data-a11y-typeface="dyslexic"] p,
+[data-a11y-typeface="dyslexic"] li,
+[data-a11y-typeface="dyslexic"] span,
+[data-a11y-typeface="dyslexic"] label {
+  font-weight: 500;
+}
+[data-a11y-typeface="dyslexic"] p {
+  margin-bottom: 1.1em;
+}
+[data-a11y-typeface="dyslexic"] em,
+[data-a11y-typeface="dyslexic"] i {
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+[data-a11y-typeface="dyslexic"]:not([dir="rtl"]) {
+  --font-sans: "Atkinson Hyperlegible Next Variable", "Manrope Variable", sans-serif;
+  --font-display: "Atkinson Hyperlegible Next Variable", "Sora Variable", sans-serif;
+  letter-spacing: 0.015em;
+  word-spacing: 0.12em;
+}
+
 @utility bento-card {
   background: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-2xl);
+  corner-shape: squircle;
   box-shadow: var(--shadow-soft);
   transition: transform 200ms ease, box-shadow 200ms ease;
   &:hover { box-shadow: var(--shadow-elegant); }
 }
 
-@utility gradient-emerald {
-  background: var(--gradient-emerald);
-  color: var(--color-primary-foreground);
+/* ==========================================================================
+   Squircle geometry
+   --------------------------------------------------------------------------
+   `corner-shape: squircle` (superellipse(2)) is the native CSS equivalent of
+   Figma's "corner smoothing" — it re-shapes whatever border-radius is
+   already set into the flatter, iOS-style superellipse curve instead of a
+   plain circular arc, and (unlike a clip-path/SVG-mask hack) borders,
+   backgrounds and box-shadow all keep working normally.
+
+   It's Chromium-only today (~65% global support, not yet Baseline) — that's
+   fine here on purpose: this is pure progressive enhancement. Browsers that
+   don't recognize the declaration just ignore it and keep the existing
+   border-radius rounding, which already looks correct on its own. Apply
+   `.squircle` alongside any `rounded-*` class.
+   ========================================================================== */
+@utility squircle {
+  corner-shape: squircle;
 }
 
-@utility gradient-gold {
-  background: var(--gradient-gold);
-  color: var(--gold-foreground);
+@utility overlay-mask {
+  background-color: var(--overlay-mask);
+}
+
+@utility gradient-brand {
+  background: var(--gradient-brand);
+  color: #000000;
+}
+
+@utility gradient-sun {
+  background: var(--gradient-sun);
+  color: #000000;
 }
