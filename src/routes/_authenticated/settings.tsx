@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getDashboard, updateActiveLanguage, updateDialect } from "@/lib/learn.functions";
 import { useDialect } from "@/hooks/use-dialect";
 import { AppShell } from "@/components/app-shell";
+import { AccessibilityToggle } from "@/components/accessibility-toggle";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,7 +43,7 @@ function SettingsPage() {
               <button
                 key={d}
                 onClick={() => { setDialect(d); diaMut.mutate(d); }}
-                className={`px-4 py-2 rounded-lg border-2 ${dialect === d ? "border-primary bg-primary/5" : "border-border"}`}
+                className={`px-4 py-2 rounded-lg squircle border-2 ${dialect === d ? "border-primary-ink bg-primary/10" : "border-border"}`}
               >
                 {t(d)}
               </button>
@@ -57,8 +58,8 @@ function SettingsPage() {
               <button
                 key={lang.code}
                 onClick={() => langMut.mutate(lang.code as "en" | "de" | "ar" | "ko")}
-                className={`p-4 rounded-xl border-2 flex items-center gap-3 ${
-                  lang.code === data?.activeLang ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                className={`p-4 rounded-xl squircle border-2 flex items-center gap-3 ${
+                  lang.code === data?.activeLang ? "border-primary-ink bg-primary/10" : "border-border hover:border-primary/40"
                 }`}
               >
                 <span className="text-3xl">{lang.flag_emoji}</span>
@@ -69,6 +70,11 @@ function SettingsPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="bento-card p-6">
+          <h2 className="font-display text-lg font-semibold mb-4">{t("accessibility")}</h2>
+          <AccessibilityToggle />
         </div>
       </div>
     </AppShell>
