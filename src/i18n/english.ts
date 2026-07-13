@@ -100,6 +100,9 @@ export const english: typeof sorani = {
   badini: "Badini",
   english: "English",
   target_language: "Target language",
+  accessibility: "Accessibility",
+  dyslexia_friendly: "Dyslexia-friendly font",
+  dyslexia_friendly_desc: "Adds extra spacing between letters and lines for easier reading",
 
   hero_title: "Language learning, from a Kurdish perspective",
   hero_sub: "Learn English, German, Arabic, or Korean with a complete guide in your mother tongue",
