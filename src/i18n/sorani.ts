@@ -107,6 +107,7 @@ const s = {
   badini: "بادینی",
   english: "English",
   target_language: "زمانی ئامانج",
+  coming_soon: "بەم زووانە",
   accessibility: "شیاندن",
   dyslexia_friendly: "فۆنتی گونجاو بۆ دیسلێکسیا",
   dyslexia_friendly_desc: "بۆشایی نێوان پیت و هێڵەکان فراوان دەکات بۆ خوێندنەوەیەکی ئاسانتر",
