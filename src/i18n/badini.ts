@@ -100,6 +100,7 @@ export const badini: typeof sorani = {
   badini: "بادینی",
   english: "English",
   target_language: "زمانێ ئارمانجی",
+  coming_soon: "بەم زوی",
   accessibility: "شیاندن",
   dyslexia_friendly: "فۆنتەکێ گونجاڤ بۆ دیسلێکسیا",
   dyslexia_friendly_desc: "بۆشایا دناڤبەرا پیت و هێلا فراوان دکەت بۆ خوێندنەکا ئاسانتر",
