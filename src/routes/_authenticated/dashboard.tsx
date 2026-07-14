@@ -1,12 +1,19 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect } from "react";
-import { getDashboard } from "@/lib/learn.functions";
+import { getDashboard, updateActiveLanguage } from "@/lib/learn.functions";
 import { useDialect } from "@/hooks/use-dialect";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Loader2, Flame, Trophy, BookOpen, PlayCircle, Target, Sparkles, ArrowLeft } from "lucide-react";
+
+// Languages with real authored lesson/vocab/video content. Everything else in
+// the `languages` table still shows up in the switcher, just muted and
+// labeled "coming soon" instead of being clickable — move a code in here
+// once it actually has content behind it.
+const AVAILABLE_LANGS: readonly string[] = ["en"];
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -15,11 +22,18 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 function Dashboard() {
   const { t, dialect } = useDialect();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const dash = useServerFn(getDashboard);
+  const setLang = useServerFn(updateActiveLanguage);
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
     queryFn: () => dash({ data: {} }),
+  });
+
+  const langMut = useMutation({
+    mutationFn: (language: "en" | "de" | "ar" | "ko") => setLang({ data: { language } }),
+    onSuccess: () => qc.invalidateQueries(),
   });
 
   useEffect(() => {
@@ -32,9 +46,14 @@ function Dashboard() {
     return <AppShell><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary-ink" /></div></AppShell>;
   }
 
+  const nameFor = (l: { name_sorani: string; name_badini: string; name_en: string }) =>
+    dialect === "sorani" ? l.name_sorani : dialect === "badini" ? l.name_badini : l.name_en;
+
   const lang = (data.languages ?? []).find((l) => l.code === data.activeLang);
-  const langLabel = lang ? (dialect === "sorani" ? lang.name_sorani : lang.name_badini) : "";
+  const langLabel = lang ? nameFor(lang) : "";
   const displayName = data.profile?.display_name ?? "";
+  const availableLanguages = (data.languages ?? []).filter((l) => AVAILABLE_LANGS.includes(l.code));
+  const comingSoonLanguages = (data.languages ?? []).filter((l) => !AVAILABLE_LANGS.includes(l.code));
 
   return (
     <AppShell activeLang={data.activeLang ?? undefined}>
@@ -44,24 +63,43 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">{t("welcome_back")} 👋</p>
           <h1 className="font-display text-3xl md:text-4xl font-bold mt-1">{displayName}</h1>
         </div>
-        <div className="flex items-center gap-2">
-          {(data.languages ?? []).map((l) => (
-            <Link
-              key={l.code}
-              to="/dashboard"
-              search={{ language: l.code as never }}
-              className={`px-3 py-1.5 rounded-lg squircle text-sm border transition-colors ${
-                l.code === data.activeLang
-                  ? "bg-primary text-primary-foreground border-primary-ink"
-                  : "border-border bg-card hover:bg-accent"
-              }`}
-              onClick={(e) => { e.preventDefault(); /* nav is per-language switch, handled by mutation elsewhere */ }}
-              title={l.name_en}
-            >
-              <span className="mr-1">{l.flag_emoji}</span>
-              {dialect === "sorani" ? l.name_sorani : l.name_badini}
-            </Link>
-          ))}
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            {availableLanguages.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                disabled={langMut.isPending}
+                onClick={() => l.code !== data.activeLang && langMut.mutate(l.code as "en" | "de" | "ar" | "ko")}
+                className={`px-3 py-1.5 rounded-lg squircle text-sm border transition-colors disabled:opacity-60 ${
+                  l.code === data.activeLang
+                    ? "bg-primary text-primary-foreground border-primary-ink"
+                    : "border-border bg-card hover:bg-accent"
+                }`}
+                title={l.name_en}
+              >
+                <span className="mr-1">{l.flag_emoji}</span>
+                {nameFor(l)}
+              </button>
+            ))}
+          </div>
+          {comingSoonLanguages.length > 0 && (
+            <div className="flex items-center gap-2">
+              {comingSoonLanguages.map((l) => (
+                <div
+                  key={l.code}
+                  title={l.name_en}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg squircle text-sm border border-border bg-muted text-muted-foreground cursor-not-allowed opacity-70"
+                >
+                  <span className="mr-0.5 grayscale">{l.flag_emoji}</span>
+                  {nameFor(l)}
+                  <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+                    {t("coming_soon")}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
