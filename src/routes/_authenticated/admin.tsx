@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useDialect } from "@/hooks/use-dialect";
+import { cn } from "@/lib/utils";
 import {
   getIsAdmin,
   adminListLessons,
@@ -480,7 +481,198 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
   );
 }
 
-interface TranscriptLine { t?: number; en: string; ku_sorani?: string; ku_badini?: string }
+interface WordHighlight {
+  id: string;
+  start_index: number;
+  end_index: number;
+  word: string;
+  part_of_speech: string;
+  meaning_en: string;
+  meaning_ku_sorani: string;
+  meaning_ku_badini: string;
+}
+
+interface TranscriptLine { t?: number; en: string; ku_sorani?: string; ku_badini?: string; highlights?: WordHighlight[] }
+
+const POS_OPTIONS = ["noun", "verb", "adjective", "adverb", "phrase", "other"] as const;
+
+function tokenizeWords(text: string): string[] {
+  return (text || "").split(/\s+/).filter(Boolean);
+}
+
+/**
+ * Lets an admin click (or shift-click to select a phrase) on words inside a
+ * transcript line's English text, then attach a part-of-speech + English/Kurdish
+ * meaning to that word or phrase. Saved highlights are stored on the line itself
+ * (`line.highlights`) inside the existing transcript_json column — no new table
+ * needed. Learners see these as clickable highlighted words on the video page.
+ */
+function LineHighlighter({ line, onChange }: { line: TranscriptLine; onChange: (highlights: WordHighlight[]) => void }) {
+  const { t } = useDialect();
+  const words = tokenizeWords(line.en);
+  const highlights = line.highlights ?? [];
+  const [form, setForm] = useState<null | {
+    mode: "create" | "edit";
+    id?: string;
+    start_index: number;
+    end_index: number;
+    word: string;
+    part_of_speech: string;
+    meaning_en: string;
+    meaning_ku_sorani: string;
+    meaning_ku_badini: string;
+  }>(null);
+
+  const findHighlightAt = (i: number) => highlights.find((h) => i >= h.start_index && i <= h.end_index);
+
+  const handleWordClick = (i: number, shiftKey: boolean) => {
+    if (shiftKey && form?.mode === "create") {
+      const start = Math.min(form.start_index, i);
+      const end = Math.max(form.end_index, i);
+      setForm({ ...form, start_index: start, end_index: end, word: words.slice(start, end + 1).join(" ") });
+      return;
+    }
+    const existing = findHighlightAt(i);
+    if (existing) {
+      setForm({
+        mode: "edit",
+        id: existing.id,
+        start_index: existing.start_index,
+        end_index: existing.end_index,
+        word: existing.word,
+        part_of_speech: existing.part_of_speech,
+        meaning_en: existing.meaning_en,
+        meaning_ku_sorani: existing.meaning_ku_sorani,
+        meaning_ku_badini: existing.meaning_ku_badini,
+      });
+      return;
+    }
+    setForm({
+      mode: "create",
+      start_index: i,
+      end_index: i,
+      word: words[i],
+      part_of_speech: "noun",
+      meaning_en: "",
+      meaning_ku_sorani: "",
+      meaning_ku_badini: "",
+    });
+  };
+
+  const saveForm = () => {
+    if (!form) return;
+    const word = form.word.trim();
+    if (!word) { toast.error("Select a word first"); return; }
+    const id = form.mode === "edit" && form.id ? form.id : crypto.randomUUID();
+    const next: WordHighlight = {
+      id,
+      start_index: form.start_index,
+      end_index: form.end_index,
+      word,
+      part_of_speech: form.part_of_speech,
+      meaning_en: form.meaning_en.trim(),
+      meaning_ku_sorani: form.meaning_ku_sorani.trim(),
+      meaning_ku_badini: form.meaning_ku_badini.trim(),
+    };
+    // drop any prior highlight with the same id, and any others that would overlap the new range
+    const withoutOverlap = highlights.filter(
+      (h) => h.id !== id && (h.end_index < next.start_index || h.start_index > next.end_index),
+    );
+    onChange([...withoutOverlap, next].sort((a, b) => a.start_index - b.start_index));
+    setForm(null);
+  };
+
+  const deleteForm = () => {
+    if (!form?.id) return;
+    onChange(highlights.filter((h) => h.id !== form.id));
+    setForm(null);
+  };
+
+  if (words.length === 0) return null;
+
+  return (
+    <div className="rounded-md border border-dashed p-3 bg-background/50 grid gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-xs">{t("highlighted_words")}</Label>
+        {highlights.length === 0 && <span className="text-[11px] text-muted-foreground">{t("no_highlights")}</span>}
+      </div>
+      <p className="text-[11px] text-muted-foreground">{t("highlight_hint")}</p>
+      <div dir="ltr" className="text-sm leading-8">
+        {words.map((w, i) => {
+          const hl = findHighlightAt(i);
+          const pending = form?.mode === "create" && i >= form.start_index && i <= form.end_index;
+          return (
+            <span
+              key={i}
+              onClick={(e) => handleWordClick(i, e.shiftKey)}
+              className={cn(
+                "cursor-pointer rounded px-0.5 py-0.5 mr-1 inline-block select-none",
+                hl && "bg-amber-300/60 dark:bg-amber-500/30 underline decoration-dotted",
+                pending && !hl && "bg-primary/25",
+                !hl && !pending && "hover:bg-muted",
+              )}
+              title={hl?.meaning_en || undefined}
+            >
+              {w}
+            </span>
+          );
+        })}
+      </div>
+      {form && (
+        <div className="rounded-md border p-3 grid gap-2 bg-muted/40">
+          <div className="text-xs text-muted-foreground">
+            {t("selected_word")}: <span className="font-medium text-foreground" dir="ltr">{form.word}</span>
+          </div>
+          <div>
+            <Label className="text-xs">{t("part_of_speech")}</Label>
+            <Select value={form.part_of_speech} onValueChange={(v) => setForm({ ...form, part_of_speech: v })}>
+              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {POS_OPTIONS.map((p) => (
+                  <SelectItem key={p} value={p}>{t(`pos_${p}` as never)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">{t("meaning_english")}</Label>
+            <Input
+              className="h-8"
+              dir="ltr"
+              value={form.meaning_en}
+              onChange={(e) => setForm({ ...form, meaning_en: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">{t("meaning_kurdish")} · {t("sorani")}</Label>
+              <Input
+                className="h-8"
+                value={form.meaning_ku_sorani}
+                onChange={(e) => setForm({ ...form, meaning_ku_sorani: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label className="text-xs">{t("meaning_kurdish")} · {t("badini")}</Label>
+              <Input
+                className="h-8"
+                value={form.meaning_ku_badini}
+                onChange={(e) => setForm({ ...form, meaning_ku_badini: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            {form.mode === "edit" && (
+              <Button type="button" size="sm" variant="destructive" onClick={deleteForm}>{t("remove_highlight")}</Button>
+            )}
+            <Button type="button" size="sm" variant="outline" onClick={() => setForm(null)}>{t("cancel")}</Button>
+            <Button type="button" size="sm" onClick={saveForm}>{t("save_highlight")}</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function TranscriptEditor({ value, onChange }: { value: TranscriptLine[]; onChange: (v: TranscriptLine[]) => void }) {
   const update = (i: number, patch: Partial<TranscriptLine>) => {
@@ -505,6 +697,7 @@ function TranscriptEditor({ value, onChange }: { value: TranscriptLine[]; onChan
             <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>✕</Button>
           </div>
           <Input placeholder="English line" dir="ltr" value={line.en} onChange={(e) => update(i, { en: e.target.value })} />
+          <LineHighlighter line={line} onChange={(highlights) => update(i, { highlights })} />
           <Input placeholder="Kurdish (Sorani) translation" value={line.ku_sorani ?? ""} onChange={(e) => update(i, { ku_sorani: e.target.value })} />
           <Input placeholder="Kurdish (Badini) translation" value={line.ku_badini ?? ""} onChange={(e) => update(i, { ku_badini: e.target.value })} />
         </div>
