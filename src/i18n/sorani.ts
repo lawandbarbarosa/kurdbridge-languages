@@ -90,6 +90,26 @@ const s = {
   show_translation: "وەرگێڕان پیشانبدە",
   hide_translation: "وەرگێڕان شاردنەوە",
   transcript: "دەق",
+  tap_word_hint: "کلیک لەسەر وشە ڕۆشنکراوەکان بکە بۆ بینینی واتاکەی",
+
+  // Word highlighting (admin transcript editor + viewer popover)
+  highlighted_words: "وشە ڕۆشنکراوەکان",
+  highlight_hint: "کلیک لەسەر وشەیەک بکە بۆ زیادکردنی واتاکەی. Shift+کلیک لەسەر وشەیەکی دیکە بکە بۆ هەڵبژاردنی دەستەواژەیەک.",
+  no_highlights: "هێشتا هیچ وشەیەکی ڕۆشنکراو نییە",
+  add_highlight: "زیادکردنی ڕۆشنکردنەوە",
+  edit_highlight: "دەستکاریکردنی ڕۆشنکردنەوە",
+  selected_word: "هەڵبژێردراو",
+  part_of_speech: "جۆری وشە",
+  meaning_english: "واتا (ئینگلیزی)",
+  meaning_kurdish: "واتا (کوردی)",
+  save_highlight: "پاشەکەوتکردن",
+  remove_highlight: "سڕینەوە",
+  pos_noun: "ناو",
+  pos_verb: "کردار",
+  pos_adjective: "ڕەنگدەر",
+  pos_adverb: "ڕەوشناو",
+  pos_phrase: "دەستەواژە",
+  pos_other: "شتی دیکە",
 
   // Placement
   placement_title: "با ئاستەکەت بزانین",
