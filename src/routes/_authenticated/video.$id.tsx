@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { getVideo } from "@/lib/learn.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +65,13 @@ function TranscriptLineText({ line, active, dialect, t }: { line: TranscriptLine
   const words = tokenizeWords(line.en);
   const segments = buildSegments(words, line.highlights ?? []);
   return (
-    <div dir="ltr" className={cn("text-base flex-1", active && "font-medium")}>
+    <div
+      dir="ltr"
+      className={cn(
+        "text-2xl sm:text-3xl leading-snug tracking-tight transition-colors",
+        active ? "text-stone-50 font-bold" : "text-stone-400 font-semibold",
+      )}
+    >
       {segments.map((seg, idx) => (
         <span key={idx}>
           {idx > 0 && " "}
@@ -75,7 +81,7 @@ function TranscriptLineText({ line, active, dialect, t }: { line: TranscriptLine
                 <button
                   type="button"
                   onClick={(e) => e.stopPropagation()}
-                  className="underline decoration-dotted decoration-2 underline-offset-4 bg-primary/10 hover:bg-primary/20 rounded px-0.5 font-medium transition"
+                  className="underline decoration-dotted decoration-2 underline-offset-4 hover:opacity-75 rounded transition"
                 >
                   {seg.text}
                 </button>
@@ -128,8 +134,10 @@ function VideoView() {
   const [showTr, setShowTr] = useState(true);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
+  const [scrollOffset, setScrollOffset] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   const videoPath = data?.video.video_path as string | null | undefined;
 
@@ -148,11 +156,18 @@ function VideoView() {
   // find active line: last line whose t <= currentTime
   const activeIdx = transcript.reduce((acc, l, i) => ((l.t ?? 0) <= currentTime + 0.05 ? i : acc), -1);
 
-  useEffect(() => {
-    if (activeIdx >= 0 && lineRefs.current[activeIdx]) {
-      lineRefs.current[activeIdx]?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  // Lyrics-style auto-follow: the visible window shifts to keep the active line
+  // centered. There is no manual scrollbar here — the only way to move through
+  // the transcript is to let the video play, or click a line to skip to it.
+  useLayoutEffect(() => {
+    const idx = activeIdx >= 0 ? activeIdx : 0;
+    const activeEl = lineRefs.current[idx];
+    const viewport = viewportRef.current;
+    if (activeEl && viewport) {
+      const offset = activeEl.offsetTop - viewport.clientHeight / 2 + activeEl.offsetHeight / 2;
+      setScrollOffset(Math.max(0, offset));
     }
-  }, [activeIdx]);
+  }, [activeIdx, transcript.length]);
 
   if (isLoading || !data || !v) return <AppShell><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div></AppShell>;
 
@@ -163,91 +178,90 @@ function VideoView() {
 
   return (
     <AppShell activeLang={v.language_code}>
-      <div className="max-w-4xl mx-auto">
-        <h1 className="font-display text-2xl font-bold" dir="ltr">{v.title}</h1>
-        {v.description && <p className="text-muted-foreground mt-1 text-sm">{v.description}</p>}
-        <div className="mt-5 aspect-video rounded-2xl squircle overflow-hidden shadow-elegant bg-black">
-          {videoPath ? (
-            signedUrl ? (
-              <video
-                ref={videoRef}
+      <div className="-mt-8 -mb-8">
+        <div className="w-screen relative left-1/2 -translate-x-1/2 bg-stone-900">
+          <div className="bg-black overflow-hidden h-[min(75vh,56.25vw)]">
+            {videoPath ? (
+              signedUrl ? (
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-contain"
+                  src={signedUrl}
+                  controls
+                  playsInline
+                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/70"><Loader2 className="h-6 w-6 animate-spin" /></div>
+              )
+            ) : v.youtube_id ? (
+              <iframe
                 className="w-full h-full"
-                src={signedUrl}
-                controls
-                playsInline
-                onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                src={`https://www.youtube.com/embed/${v.youtube_id}`}
+                title={v.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/70"><Loader2 className="h-6 w-6 animate-spin" /></div>
-            )
-          ) : v.youtube_id ? (
-            <iframe
-              className="w-full h-full"
-              src={`https://www.youtube.com/embed/${v.youtube_id}`}
-              title={v.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/70">No video source</div>
-          )}
-        </div>
+              <div className="w-full h-full flex items-center justify-center text-white/70">No video source</div>
+            )}
+          </div>
 
-        <div className="mt-8 flex items-center justify-between">
-          <h2 className="font-display text-xl font-semibold">{t("transcript")}</h2>
-          <Button variant="outline" size="sm" onClick={() => setShowTr((s) => !s)}>
-            {showTr ? <EyeOff className="ml-2 h-4 w-4" /> : <Eye className="ml-2 h-4 w-4" />}
-            {showTr ? t("hide_translation") : t("show_translation")}
-          </Button>
-        </div>
-        {transcript.some((l) => (l.highlights ?? []).length > 0) && (
-          <p className="mt-1 text-xs text-muted-foreground">{t("tap_word_hint")}</p>
-        )}
+          <div className="max-w-3xl mx-auto px-6 pt-6 pb-12">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="font-display text-2xl font-bold text-stone-50" dir="ltr">{v.title}</h1>
+                {v.description && <p className="text-stone-400 mt-1 text-sm">{v.description}</p>}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowTr((s) => !s)}
+                className="shrink-0 border border-stone-700 text-stone-300 hover:text-stone-50 hover:bg-stone-800"
+              >
+                {showTr ? <EyeOff className="ml-2 h-4 w-4" /> : <Eye className="ml-2 h-4 w-4" />}
+                {showTr ? t("hide_translation") : t("show_translation")}
+              </Button>
+            </div>
+            {transcript.some((l) => (l.highlights ?? []).length > 0) && (
+              <p className="mt-3 text-xs text-stone-500">{t("tap_word_hint")}</p>
+            )}
 
-        <div className="mt-4 bento-card p-4 space-y-2 max-h-[520px] overflow-y-auto">
-          {transcript.length === 0 ? (
-            <p className="text-muted-foreground p-4">{t("no_words")}</p>
-          ) : (
-            transcript.map((line, i) => {
-              const active = i === activeIdx;
-              return (
+            {/* Spotify-style lyrics viewport: fixed height, no scrollbar. The window
+                only follows video playback, or jumps when a line is clicked (which
+                skips the video to that point) — it can't be scrolled by hand. */}
+            <div ref={viewportRef} className="relative mt-8 h-[min(50vh,420px)] overflow-hidden">
+              {transcript.length === 0 ? (
+                <p className="text-stone-400 py-4">{t("no_words")}</p>
+              ) : (
                 <div
-                  key={i}
-                  ref={(el) => { lineRefs.current[i] = el; }}
-                  onClick={() => videoPath && seekTo(line.t ?? 0)}
-                  className={cn(
-                    "rounded-lg px-4 py-3 border-r-4 transition cursor-pointer",
-                    active
-                      ? "bg-primary/15 border-primary-ink shadow-sm"
-                      : "border-transparent hover:bg-muted/50",
-                    videoPath ? "cursor-pointer" : "cursor-default",
-                  )}
+                  className="transition-transform duration-500 ease-out"
+                  style={{ transform: `translateY(${-scrollOffset}px)` }}
                 >
-                  <div className="flex items-baseline gap-3">
-                    {typeof line.t === "number" && (
-                      <span className="text-[10px] tabular-nums text-muted-foreground w-10 shrink-0" dir="ltr">
-                        {formatTime(line.t)}
-                      </span>
-                    )}
-                    <TranscriptLineText line={line} active={active} dialect={dialect} t={t} />
-                  </div>
-                  {showTr && (
-                    <div className="mt-1 text-sm text-muted-foreground font-kurdish pr-13" style={{ paddingInlineStart: "3.25rem" }}>
-                      {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
-                    </div>
-                  )}
+                  {transcript.map((line, i) => {
+                    const active = i === activeIdx;
+                    return (
+                      <div
+                        key={i}
+                        ref={(el) => { lineRefs.current[i] = el; }}
+                        onClick={() => videoPath && seekTo(line.t ?? 0)}
+                        className={cn("py-3", videoPath ? "cursor-pointer" : "cursor-default")}
+                      >
+                        <TranscriptLineText line={line} active={active} dialect={dialect} t={t} />
+                        {showTr && (line.ku_sorani || line.ku_badini) && (
+                          <div className={cn("mt-1 text-sm font-kurdish transition-colors", active ? "text-stone-300" : "text-stone-600")}>
+                            {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })
-          )}
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </AppShell>
   );
-}
-
-function formatTime(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60);
-  return `${m}:${sec.toString().padStart(2, "0")}`;
 }
