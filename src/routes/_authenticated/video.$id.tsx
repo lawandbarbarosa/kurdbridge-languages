@@ -69,7 +69,7 @@ function TranscriptLineText({ line, active, dialect, t }: { line: TranscriptLine
       dir="ltr"
       className={cn(
         "text-2xl sm:text-3xl leading-snug tracking-tight transition-colors",
-        active ? "text-stone-50 font-bold" : "text-stone-400 font-semibold",
+        active ? "text-foreground font-bold" : "text-muted-foreground font-semibold",
       )}
     >
       {segments.map((seg, idx) => (
@@ -179,7 +179,7 @@ function VideoView() {
   return (
     <AppShell activeLang={v.language_code}>
       <div className="-mt-8 -mb-8">
-        <div className="w-screen relative left-1/2 -translate-x-1/2 bg-stone-900">
+        <div className="w-screen relative left-1/2 -translate-x-1/2 bg-background">
           <div className="bg-black overflow-hidden h-[min(75vh,56.25vw)]">
             {videoPath ? (
               signedUrl ? (
@@ -210,21 +210,16 @@ function VideoView() {
           <div className="max-w-3xl mx-auto px-6 pt-6 pb-12">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <h1 className="font-display text-2xl font-bold text-stone-50" dir="ltr">{v.title}</h1>
-                {v.description && <p className="text-stone-400 mt-1 text-sm">{v.description}</p>}
+                <h1 className="font-display text-2xl font-bold text-foreground" dir="ltr">{v.title}</h1>
+                {v.description && <p className="text-muted-foreground mt-1 text-sm">{v.description}</p>}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowTr((s) => !s)}
-                className="shrink-0 border border-stone-700 text-stone-300 hover:text-stone-50 hover:bg-stone-800"
-              >
+              <Button variant="outline" size="sm" onClick={() => setShowTr((s) => !s)} className="shrink-0">
                 {showTr ? <EyeOff className="ml-2 h-4 w-4" /> : <Eye className="ml-2 h-4 w-4" />}
                 {showTr ? t("hide_translation") : t("show_translation")}
               </Button>
             </div>
             {transcript.some((l) => (l.highlights ?? []).length > 0) && (
-              <p className="mt-3 text-xs text-stone-500">{t("tap_word_hint")}</p>
+              <p className="mt-3 text-xs text-muted-foreground">{t("tap_word_hint")}</p>
             )}
 
             {/* Spotify-style lyrics viewport: fixed height, no scrollbar. The window
@@ -232,7 +227,7 @@ function VideoView() {
                 skips the video to that point) — it can't be scrolled by hand. */}
             <div ref={viewportRef} className="relative mt-8 h-[min(50vh,420px)] overflow-hidden">
               {transcript.length === 0 ? (
-                <p className="text-stone-400 py-4">{t("no_words")}</p>
+                <p className="text-muted-foreground py-4">{t("no_words")}</p>
               ) : (
                 <div
                   className="transition-transform duration-500 ease-out"
@@ -249,7 +244,7 @@ function VideoView() {
                       >
                         <TranscriptLineText line={line} active={active} dialect={dialect} t={t} />
                         {showTr && (line.ku_sorani || line.ku_badini) && (
-                          <div className={cn("mt-1 text-sm font-kurdish transition-colors", active ? "text-stone-300" : "text-stone-600")}>
+                          <div className={cn("mt-1 text-sm font-kurdish transition-colors", active ? "text-foreground/70" : "text-muted-foreground")}>
                             {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
                           </div>
                         )}
