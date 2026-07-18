@@ -164,13 +164,14 @@ function VideoView() {
     return () => { isCurrent = false; };
   }, [videoPath]);
 
-  // 2. Manage Video Duration Fallback dynamically
+  // 2. Set dynamic duration fallback based on the *actual complete video length*
   useEffect(() => {
-    if (transcript.length > 0) {
-      const calculatedEnd = (transcript[transcript.length - 1].t ?? 0) + 4;
+    if (transcript.length > 0 && duration === 0) {
+      // Add a generous pad to account for final spoken lines going to the video frame tail
+      const calculatedEnd = (transcript[transcript.length - 1].t ?? 0) + 10;
       setDuration(calculatedEnd);
     }
-  }, [transcript]);
+  }, [transcript, duration]);
 
   // 3. YouTube Polling Mechanism Fallback
   useEffect(() => {
@@ -272,7 +273,7 @@ function VideoView() {
                     playsInline
                     onClick={togglePlay}
                     onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                    onDurationChange={(e) => setDuration(e.currentTarget.duration || duration)}
+                    onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
                     onPlay={() => setIsPlaying(true)}
                     onPause={() => setIsPlaying(false)}
                   />
@@ -292,15 +293,16 @@ function VideoView() {
               )}
             </div>
 
-            {/* Custom YouTube-Style Segmented Interface Overlay controls */}
+            {/* Custom YouTube-Style Segmented Controls Overlay */}
             {videoPath && signedUrl && (
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
                 
-                {/* Segmented Timeline Control Bar */}
+                {/* Fixed Segmented Timeline Control Bar - Full Span, No Trims */}
                 <div className="flex gap-[3px] h-1.5 items-center cursor-pointer mb-3 relative group/timeline">
                   {transcript.map((line, idx) => {
                     const startTime = line.t ?? 0;
                     const nextLine = transcript[idx + 1];
+                    // If it's the final segment, stretch it precisely to the true video end
                     const endTime = nextLine ? (nextLine.t ?? startTime) : duration;
                     const segmentDuration = Math.max(0.1, endTime - startTime);
                     
@@ -329,7 +331,7 @@ function VideoView() {
                           style={{ width: `${fillPercent}%` }}
                         />
                         
-                        {/* Interactive floating preview panel hover container */}
+                        {/* Preview panel hover container */}
                         <div className="absolute hidden group-hover/seg:block bottom-5 left-1/2 -translate-x-1/2 bg-neutral-900/95 text-white text-[11px] font-sans tracking-wide px-2.5 py-1.5 rounded border border-white/10 shadow-xl whitespace-nowrap z-50 pointer-events-none">
                           <span className="text-red-400 font-bold mr-1">{formatTime(startTime)}</span> 
                           {line.en.substring(0, 35)}{line.en.length > 35 ? "..." : ""}
@@ -339,7 +341,7 @@ function VideoView() {
                   })}
                 </div>
 
-                {/* Lower Action Hub Panel Dashboard */}
+                {/* Lower Action Hub Controls Panel */}
                 <div className="flex items-center justify-between text-white text-sm px-1">
                   <div className="flex items-center gap-4">
                     <button onClick={togglePlay} className="hover:text-red-500 transition p-0.5">
