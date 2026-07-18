@@ -155,7 +155,7 @@ function LessonForm({ value, onChange }: { value: Record<string, unknown>; onCha
   const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
   return (
     <div className="grid gap-3">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div><Label>Order</Label><Input type="number" value={value.order_index as number} onChange={(e) => set("order_index", Number(e.target.value))} /></div>
         <div><Label>Title (Sorani)</Label><Input value={(value.title_sorani ?? "") as string} onChange={(e) => set("title_sorani", e.target.value)} /></div>
       </div>
@@ -239,7 +239,7 @@ function VocabForm({ value, onChange }: { value: Record<string, unknown>; onChan
   const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
   return (
     <div className="grid gap-3">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div><Label>Language</Label>
           <Select value={value.language_code as string} onValueChange={(v) => set("language_code", v)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -255,13 +255,13 @@ function VocabForm({ value, onChange }: { value: Record<string, unknown>; onChan
       </div>
       <div><Label>Topic</Label><Input value={(value.topic ?? "") as string} onChange={(e) => set("topic", e.target.value)} /></div>
       <div><Label>Word</Label><Input value={(value.word ?? "") as string} onChange={(e) => set("word", e.target.value)} /></div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div><Label>Kurdish (Sorani)</Label><Input value={(value.kurdish_sorani ?? "") as string} onChange={(e) => set("kurdish_sorani", e.target.value)} /></div>
         <div><Label>Kurdish (Badini)</Label><Input value={(value.kurdish_badini ?? "") as string} onChange={(e) => set("kurdish_badini", e.target.value)} /></div>
       </div>
       <div><Label>Pronunciation</Label><Input value={(value.pronunciation ?? "") as string} onChange={(e) => set("pronunciation", e.target.value)} /></div>
       <div><Label>Example sentence</Label><Input value={(value.example_sentence ?? "") as string} onChange={(e) => set("example_sentence", e.target.value)} /></div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div><Label>Example (Sorani)</Label><Input value={(value.example_sorani ?? "") as string} onChange={(e) => set("example_sorani", e.target.value)} /></div>
         <div><Label>Example (Badini)</Label><Input value={(value.example_badini ?? "") as string} onChange={(e) => set("example_badini", e.target.value)} /></div>
       </div>
@@ -427,7 +427,7 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
 
   return (
     <div className="grid gap-3">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div><Label>Language</Label>
           <Select value={value.language_code as string} onValueChange={(v) => set("language_code", v)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
@@ -646,7 +646,7 @@ function LineHighlighter({ line, onChange }: { line: TranscriptLine; onChange: (
               onChange={(e) => setForm({ ...form, meaning_en: e.target.value })}
             />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <Label className="text-xs">{t("meaning_kurdish")} · {t("sorani")}</Label>
               <Input
