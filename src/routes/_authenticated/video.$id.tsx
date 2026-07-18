@@ -182,7 +182,8 @@ function VideoView() {
     if (!viewport || !activeEl) return;
 
     const recalc = () => {
-      const offset = activeEl.offsetTop - viewport.clientHeight / 2 + activeEl.offsetHeight / 2;
+      // Adjusted to align exactly with the top of the container
+      const offset = activeEl.offsetTop;
       setScrollOffset(Math.max(0, offset));
     };
 
