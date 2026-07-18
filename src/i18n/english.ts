@@ -43,6 +43,7 @@ export const english: typeof sorani = {
   take_placement: "Take a placement test",
   skip_placement: "Start from A1",
 
+  menu: "Menu",
   dashboard: "Dashboard",
   welcome_back: "Welcome back",
   current_level: "Current level",
