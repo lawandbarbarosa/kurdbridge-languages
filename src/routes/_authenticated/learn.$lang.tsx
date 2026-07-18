@@ -28,7 +28,7 @@ function Learn() {
   return (
     <AppShell activeLang={lang}>
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-baseline justify-between mb-8">
+        <div className="flex items-baseline justify-between flex-wrap gap-2 mb-8">
           <h1 className="font-display text-3xl font-bold">{t("lesson_tree")}</h1>
           <div className="text-sm text-muted-foreground">{t("current_level")}: <span className="font-bold text-primary-ink">{data?.currentCefr}</span></div>
         </div>
@@ -47,9 +47,9 @@ function Learn() {
                 </h2>
               </div>
               {lvl.lessons.length === 0 ? (
-                <div className="text-sm text-muted-foreground italic pr-16">{t("no_words")}</div>
+                <div className="text-sm text-muted-foreground italic md:pr-16">{t("no_words")}</div>
               ) : (
-                <div className="grid md:grid-cols-2 gap-3 pr-16">
+                <div className="grid md:grid-cols-2 gap-3 md:pr-16">
                   {lvl.lessons.map((l) => (
                     <LessonNode key={l.id} lesson={l} dialect={dialect} disabled={!l.unlocked} />
                   ))}
