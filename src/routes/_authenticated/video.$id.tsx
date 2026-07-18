@@ -69,13 +69,15 @@ function TranscriptLineText({
   active, 
   dialect, 
   t,
-  onHighlightClick 
+  onHighlightClick,
+  onHighlightClose
 }: { 
   line: TranscriptLine; 
   active: boolean; 
   dialect: string; 
   t: (key: TranslationKey) => string;
   onHighlightClick: () => void;
+  onHighlightClose: () => void;
 }) {
   const words = tokenizeWords(line.en);
   const segments = buildSegments(words, line.highlights ?? []);
@@ -91,7 +93,9 @@ function TranscriptLineText({
         <span key={idx}>
           {idx > 0 && " "}
           {seg.highlight ? (
-            <Popover>
+            <Popover onOpenChange={(open) => {
+              if (!open) onHighlightClose();
+            }}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
@@ -253,6 +257,12 @@ function VideoView() {
     }
   };
 
+  const playVideo = () => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
   const toggleMute = () => {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
@@ -272,7 +282,21 @@ function VideoView() {
     <AppShell activeLang={v.language_code}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         
-        {/* Safe, self-contained player frame canvas (No dangerous negative margin trims) */}
+        {/* Header Action Context Layout (Title/Description Top Left relative to Video Workspace) */}
+        <div className="flex items-start justify-between gap-4 flex-wrap pb-2">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground break-words" dir="ltr">
+              {v.title}
+            </h1>
+            {v.description && <p className="text-muted-foreground mt-1 text-sm break-words">{v.description}</p>}
+          </div>
+          <Button variant="outline" size="sm" onClick={() => setShowTr((s) => !s)} className="shrink-0">
+            {showTr ? <EyeOff className="ml-2 h-4 w-4" /> : <Eye className="ml-2 h-4 w-4" />}
+            {showTr ? t("hide_translation") : t("show_translation")}
+          </Button>
+        </div>
+
+        {/* Safe, self-contained player frame canvas */}
         <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl max-h-[85vh] flex flex-col justify-between group">
           <div className="w-full h-full flex items-center justify-center grow bg-neutral-950">
             {videoPath ? (
@@ -360,21 +384,8 @@ function VideoView() {
           )}
         </div>
 
-        {/* Info & Transcript Body Section */}
+        {/* Transcript Body Section */}
         <div className="space-y-6">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="min-w-0 flex-1">
-              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground break-words" dir="ltr">
-                {v.title}
-              </h1>
-              {v.description && <p className="text-muted-foreground mt-1 text-sm break-words">{v.description}</p>}
-            </div>
-            <Button variant="outline" size="sm" onClick={() => setShowTr((s) => !s)} className="shrink-0">
-              {showTr ? <EyeOff className="ml-2 h-4 w-4" /> : <Eye className="ml-2 h-4 w-4" />}
-              {showTr ? t("hide_translation") : t("show_translation")}
-            </Button>
-          </div>
-          
           {transcript.some((l) => (l.highlights ?? []).length > 0) && (
             <p className="text-xs text-muted-foreground">{t("tap_word_hint")}</p>
           )}
@@ -405,6 +416,7 @@ function VideoView() {
                         dialect={dialect} 
                         t={t} 
                         onHighlightClick={pauseVideo}
+                        onHighlightClose={playVideo}
                       />
                       {showTr && (line.ku_sorani || line.ku_badini) && (
                         <div className={cn("mt-1 text-sm font-kurdish break-words transition-colors", active ? "text-foreground/70" : "text-muted-foreground")}>
