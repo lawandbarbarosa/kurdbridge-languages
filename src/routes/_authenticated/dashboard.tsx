@@ -114,7 +114,11 @@ function Dashboard() {
             </div>
             <h2 className="mt-2 font-display text-3xl font-semibold">
               {data.recentLesson
-                ? (dialect === "badini" ? data.recentLesson.title_badini : data.recentLesson.title_sorani)
+                ? (dialect === "badini"
+                    ? data.recentLesson.title_badini
+                    : dialect === "english"
+                    ? (data.recentLesson.title_en ?? data.recentLesson.title_sorani)
+                    : data.recentLesson.title_sorani)
                 : `${langLabel} • ${data.level?.current_cefr ?? "A1"}`}
             </h2>
             <p className="mt-3 text-muted-foreground max-w-md">
