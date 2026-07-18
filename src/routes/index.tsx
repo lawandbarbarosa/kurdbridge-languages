@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDialect } from "@/hooks/use-dialect";
@@ -7,11 +7,6 @@ import { BookOpen, Target, PlayCircle, Sparkles, ArrowLeft } from "lucide-react"
 import { DialectToggle } from "@/components/dialect-toggle";
 
 export const Route = createFileRoute("/")({
-  ssr: false,
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (data.user) throw redirect({ to: "/dashboard" });
-  },
   component: Landing,
 });
 
@@ -32,9 +27,7 @@ function Landing() {
       <header className="border-b border-border/60 backdrop-blur-sm bg-background/70 sticky top-0 z-40">
         <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="h-9 w-9 rounded-xl squircle gradient-brand grid place-items-center shadow-soft">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img src="/logo.png" alt={t("app_name")} className="h-9 w-9 rounded-xl squircle object-cover shadow-soft" />
             <span className="font-display text-xl font-semibold tracking-tight">{t("app_name")}</span>
           </Link>
           <div className="flex items-center gap-3">
