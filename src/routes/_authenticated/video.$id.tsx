@@ -1,8 +1,3 @@
-Here is the complete, integrated production code.
-
-To give you the exact YouTube-style experience, this code swaps out the browser's default video controls for a custom UI panel. It includes the **dynamically split progress scrubber bar** (which splits into visual segments using your transcript timestamps), hover tooltips, custom play/pause state handling, and a dedicated layout optimization to prevent UI lag.
-
-```tsx
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -421,5 +416,3 @@ function VideoView() {
     </AppShell>
   );
 }
-
-```
