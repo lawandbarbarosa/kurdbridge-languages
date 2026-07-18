@@ -36,18 +36,18 @@ function Onboarding() {
   return (
     <AppShell>
       <div className="max-w-3xl mx-auto text-center py-10">
-        <h1 className="font-display text-4xl font-bold">{t("choose_language")}</h1>
+        <h1 className="font-display text-3xl sm:text-4xl font-bold">{t("choose_language")}</h1>
         <p className="mt-3 text-muted-foreground">{t("choose_language_sub")}</p>
 
-        <div className="mt-10 grid grid-cols-2 gap-4">
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {(data?.languages ?? []).map((lang) => (
             <button
               key={lang.code}
               onClick={() => pick.mutate(lang.code as "en" | "de" | "ar" | "ko")}
               disabled={pick.isPending}
-              className="bento-card p-8 text-center hover:scale-[1.02] transition-transform disabled:opacity-50"
+              className="bento-card p-6 sm:p-8 text-center hover:scale-[1.02] transition-transform disabled:opacity-50"
             >
-              <div className="text-6xl mb-4">{lang.flag_emoji}</div>
+              <div className="text-5xl sm:text-6xl mb-4">{lang.flag_emoji}</div>
               <div className="font-display text-xl font-semibold">
                 {dialect === "sorani" ? lang.name_sorani : dialect === "badini" ? lang.name_badini : lang.name_en}
               </div>
