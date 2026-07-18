@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDialect } from "@/hooks/use-dialect";
 import { DialectToggle } from "@/components/dialect-toggle";
 import { Button } from "@/components/ui/button";
-import { Sparkles, LayoutDashboard, BookOpen, PlayCircle, Settings, LogOut, Mic, Shield } from "lucide-react";
+import { Sparkles, LayoutDashboard, BookOpen, PlayCircle, Settings, LogOut, Mic, Shield, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -21,6 +22,7 @@ export function AppShell({ children, activeLang }: Props) {
   const queryClient = useQueryClient();
   const [email, setEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
@@ -56,8 +58,8 @@ export function AppShell({ children, activeLang }: Props) {
   return (
     <div dir={dir} className="min-h-screen">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
-          <Link to="/dashboard" className="flex items-center gap-2">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+          <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
             <img src="/logo.png" alt={t("app_name")} className="h-9 w-9 rounded-xl squircle object-cover shadow-soft" />
             <span className="font-display text-lg font-semibold">{t("app_name")}</span>
           </Link>
@@ -73,7 +75,7 @@ export function AppShell({ children, activeLang }: Props) {
               </a>
             ))}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="hidden md:flex items-center gap-2">
             <DialectToggle />
             <Button asChild variant="ghost" size="icon" title={t("settings")}>
               <Link to="/settings"><Settings className="h-4 w-4" /></Link>
@@ -82,14 +84,67 @@ export function AppShell({ children, activeLang }: Props) {
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
+
+          {/* Mobile: everything above collapses into a hamburger menu so the
+              header row never has to fit nav links + dialect toggle + icons
+              in one line on a narrow screen. */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            title={t("menu")}
+            aria-label={t("menu")}
+            onClick={() => setMobileOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetContent side={dir === "rtl" ? "left" : "right"} className="w-[85vw] max-w-sm flex flex-col">
+              <SheetHeader>
+                <SheetTitle className="text-left rtl:text-right font-display">{t("app_name")}</SheetTitle>
+              </SheetHeader>
+              <nav className="mt-2 flex flex-col gap-1">
+                {nav.map((n) => (
+                  <SheetClose asChild key={n.to}>
+                    <a
+                      href={n.to}
+                      className="px-3 py-2.5 rounded-lg text-sm text-foreground hover:bg-accent transition-colors flex items-center gap-2"
+                    >
+                      <n.icon className="h-4 w-4" />
+                      {n.label}
+                    </a>
+                  </SheetClose>
+                ))}
+                <SheetClose asChild>
+                  <Link
+                    to="/settings"
+                    className="px-3 py-2.5 rounded-lg text-sm text-foreground hover:bg-accent transition-colors flex items-center gap-2"
+                  >
+                    <Settings className="h-4 w-4" />
+                    {t("settings")}
+                  </Link>
+                </SheetClose>
+              </nav>
+              <div className="mt-4">
+                <DialectToggle />
+              </div>
+              <div className="mt-auto pt-4 border-t border-border/60 space-y-3">
+                {email && <div className="text-xs text-muted-foreground truncate">{email}</div>}
+                <Button variant="outline" className="w-full" onClick={onSignOut}>
+                  <LogOut className="h-4 w-4 ml-2" />
+                  {t("sign_out")}
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
         {email && (
-          <div className="mx-auto max-w-7xl px-6 pb-2 text-xs text-muted-foreground truncate">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 pb-2 text-xs text-muted-foreground truncate hidden md:block">
             {email}
           </div>
         )}
       </header>
-      <main className="mx-auto max-w-7xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">{children}</main>
     </div>
   );
 }
