@@ -291,22 +291,6 @@ function VideoView() {
                   style={{ width: `${overallProgressPercent}%` }}
                 />
 
-                {/* Micro Segment Break Dividers */}
-                {transcript.map((line, idx) => {
-                  const timePosition = line.t ?? 0;
-                  const leftPercent = duration > 0 ? (timePosition / duration) * 100 : 0;
-                  
-                  if (leftPercent <= 0 || leftPercent >= 100) return null;
-
-                  return (
-                    <div 
-                      key={idx}
-                      className="absolute top-0 w-[2px] h-full bg-black/80 z-10 pointer-events-none"
-                      style={{ left: `${leftPercent}%` }}
-                    />
-                  );
-                })}
-
                 {/* Floating Interactive Hover Zones */}
                 {transcript.map((line, idx) => {
                   const startTime = line.t ?? 0;
