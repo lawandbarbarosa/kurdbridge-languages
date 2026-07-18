@@ -98,10 +98,13 @@ export const adminUpsertLesson = createServerFn({ method: "POST" })
       order_index: z.number().int().min(0),
       title_sorani: z.string().min(1).max(200),
       title_badini: z.string().min(1).max(200),
+      title_en: z.string().max(200).optional(),
       summary_sorani: z.string().max(1000).optional(),
       summary_badini: z.string().max(1000).optional(),
+      summary_en: z.string().max(1000).optional(),
       grammar_md_sorani: z.string().max(20000).optional(),
       grammar_md_badini: z.string().max(20000).optional(),
+      grammar_md_en: z.string().max(20000).optional(),
       dialogue_json: z.array(z.object({ speaker: z.string(), line: z.string(), translation_ku: z.string().optional() })).default([]),
     }).parse(d),
   )
