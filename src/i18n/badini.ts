@@ -43,6 +43,7 @@ export const badini: typeof sorani = {
   take_placement: "تاقیکرنا ئاستی",
   skip_placement: "دەستپێبکە ژ A1",
 
+  menu: "مینیو",
   dashboard: "سەرەکی",
   welcome_back: "بخێرهاتی جارەکا دی",
   current_level: "ئاستێ نوکە",
