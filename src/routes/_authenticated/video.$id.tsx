@@ -144,7 +144,7 @@ function VideoView() {
   const [duration, setDuration] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
-  const ytPlayerRef = useRef<any>(null); 
+  const timelineRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<Array<HTMLDivElement | null>>([]);
   const viewportRef = useRef<HTMLDivElement>(null);
 
@@ -164,32 +164,18 @@ function VideoView() {
     return () => { isCurrent = false; };
   }, [videoPath]);
 
-  // 2. Set dynamic duration fallback based on the *actual complete video length*
+  // 2. Continuous Duration Fallback until video metadata is fully mounted
   useEffect(() => {
     if (transcript.length > 0 && duration === 0) {
-      // Add a generous pad to account for final spoken lines going to the video frame tail
-      const calculatedEnd = (transcript[transcript.length - 1].t ?? 0) + 10;
+      const calculatedEnd = (transcript[transcript.length - 1].t ?? 0) + 5;
       setDuration(calculatedEnd);
     }
   }, [transcript, duration]);
 
-  // 3. YouTube Polling Mechanism Fallback
-  useEffect(() => {
-    if (videoPath || !v?.youtube_id) return;
-    
-    const interval = setInterval(() => {
-      if (ytPlayerRef.current?.getCurrentTime) {
-        setCurrentTime(ytPlayerRef.current.getCurrentTime());
-      }
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [videoPath, v?.youtube_id]);
-
   // Derive Active Line Highlight Index
   const activeIdx = transcript.reduce((acc, l, i) => ((l.t ?? 0) <= currentTime + 0.05 ? i : acc), -1);
 
-  // 4. Smooth, Optimized Auto-Follow
+  // 3. Smooth, Optimized Auto-Follow
   useLayoutEffect(() => {
     const idx = activeIdx >= 0 ? activeIdx : 0;
     const viewport = viewportRef.current;
@@ -222,23 +208,28 @@ function VideoView() {
   }
 
   const seekTo = (sec: number) => {
-    if (videoPath && videoRef.current) {
-      videoRef.current.currentTime = sec;
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, Math.min(sec, duration));
       videoRef.current.play().catch(() => {});
       setIsPlaying(true);
-    } else if (v.youtube_id && ytPlayerRef.current?.seekTo) {
-      ytPlayerRef.current.seekTo(sec, true);
     }
+  };
+
+  // Allows tracking clicking anywhere along the continuous bar path
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!timelineRef.current || duration === 0) return;
+    const rect = timelineRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const newPercent = clickX / rect.width;
+    seekTo(newPercent * duration);
   };
 
   const togglePlay = () => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
-        setIsPlaying(false);
       } else {
         videoRef.current.play().catch(() => {});
-        setIsPlaying(true);
       }
     }
   };
@@ -256,12 +247,15 @@ function VideoView() {
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
+  // Safe percentage calculation to prevent NaN issues
+  const overallProgressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   return (
     <AppShell activeLang={v.language_code}>
       <div className="-mt-8 -mb-8">
         <div className="-mx-4 sm:-mx-6 bg-background">
           
-          {/* Main Custom Player Canvas */}
+          {/* Main Video Screen Container */}
           <div className="relative bg-black overflow-hidden h-[min(75dvh,56.25vw)] flex flex-col justify-between group">
             <div className="w-full h-full flex items-center justify-center grow">
               {videoPath ? (
@@ -280,60 +274,65 @@ function VideoView() {
                 ) : (
                   <Loader2 className="h-6 w-6 animate-spin text-white/70" />
                 )
-              ) : v.youtube_id ? (
-                <iframe
-                  className="w-full h-full"
-                  src={`https://www.youtube.com/embed/${v.youtube_id}?enablejsapi=1`}
-                  title={v.title}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
               ) : (
-                <div className="text-white/70">No video source</div>
+                <div className="text-white/70">No standard video source uploaded</div>
               )}
             </div>
 
-            {/* Custom YouTube-Style Segmented Controls Overlay */}
+            {/* Custom YouTube-Style Controls Panel Overlay */}
             {videoPath && signedUrl && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-3 pt-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
                 
-                {/* Fixed Segmented Timeline Control Bar - Full Span, No Trims */}
-                <div className="flex gap-[3px] h-1.5 items-center cursor-pointer mb-3 relative group/timeline">
+                {/* 100% UNTRIMMED CONTINUOUS SLIDER TRACK */}
+                <div 
+                  ref={timelineRef}
+                  onClick={handleTimelineClick}
+                  className="relative w-full h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer rounded-full mb-3 overflow-visible group/timeline"
+                >
+                  {/* Active Red Playback Fill Progress Track */}
+                  <div 
+                    className="absolute top-0 left-0 h-full bg-red-600 rounded-full pointer-events-none"
+                    style={{ width: `${overallProgressPercent}%` }}
+                  />
+
+                  {/* Absolute Positional Segment Dividers */}
+                  {transcript.map((line, idx) => {
+                    const timePosition = line.t ?? 0;
+                    const leftPercent = duration > 0 ? (timePosition / duration) * 100 : 0;
+                    
+                    if (leftPercent <= 0 || leftPercent >= 100) return null;
+
+                    return (
+                      <div 
+                        key={idx}
+                        className="absolute top-0 w-[3px] h-full bg-black/90 z-10 pointer-events-none group-hover/timeline:w-[4px]"
+                        style={{ left: `${leftPercent}%` }}
+                      />
+                    );
+                  })}
+
+                  {/* Interactive Floating Hover Preview Panels */}
                   {transcript.map((line, idx) => {
                     const startTime = line.t ?? 0;
                     const nextLine = transcript[idx + 1];
-                    // If it's the final segment, stretch it precisely to the true video end
                     const endTime = nextLine ? (nextLine.t ?? startTime) : duration;
-                    const segmentDuration = Math.max(0.1, endTime - startTime);
                     
-                    const widthPercent = (segmentDuration / duration) * 100;
-                    
-                    let fillPercent = 0;
-                    if (currentTime >= endTime) {
-                      fillPercent = 100;
-                    } else if (currentTime >= startTime && currentTime < endTime) {
-                      fillPercent = ((currentTime - startTime) / segmentDuration) * 100;
-                    }
+                    const leftPercent = duration > 0 ? (startTime / duration) * 100 : 0;
+                    const rightPercent = duration > 0 ? (endTime / duration) * 100 : 100;
+                    const segmentWidth = rightPercent - leftPercent;
 
                     return (
                       <div
-                        key={idx}
-                        style={{ width: `${widthPercent}%` }}
+                        key={`hover-${idx}`}
+                        className="absolute top-0 h-full group/seg cursor-pointer"
+                        style={{ left: `${leftPercent}%`, width: `${segmentWidth}%` }}
                         onClick={(e) => {
                           e.stopPropagation();
                           seekTo(startTime);
                         }}
-                        className="relative h-1 hover:h-2 bg-white/30 transition-all rounded-sm overflow-visible group/seg"
                       >
-                        {/* Red Fill Track progress indicator */}
-                        <div 
-                          className="h-full bg-red-600 transition-all duration-75 rounded-sm" 
-                          style={{ width: `${fillPercent}%` }}
-                        />
-                        
-                        {/* Preview panel hover container */}
-                        <div className="absolute hidden group-hover/seg:block bottom-5 left-1/2 -translate-x-1/2 bg-neutral-900/95 text-white text-[11px] font-sans tracking-wide px-2.5 py-1.5 rounded border border-white/10 shadow-xl whitespace-nowrap z-50 pointer-events-none">
-                          <span className="text-red-400 font-bold mr-1">{formatTime(startTime)}</span> 
+                        <div className="absolute hidden group-hover/seg:block bottom-6 left-1/2 -translate-x-1/2 bg-neutral-950/95 text-white text-[11px] font-sans tracking-wide px-3 py-2 rounded-md border border-white/10 shadow-2xl whitespace-nowrap z-50 pointer-events-none">
+                          <span className="text-red-500 font-bold mr-1.5">{formatTime(startTime)}</span> 
                           {line.en.substring(0, 35)}{line.en.length > 35 ? "..." : ""}
                         </div>
                       </div>
@@ -341,7 +340,7 @@ function VideoView() {
                   })}
                 </div>
 
-                {/* Lower Action Hub Controls Panel */}
+                {/* Bottom Media Bar Controls Panel */}
                 <div className="flex items-center justify-between text-white text-sm px-1">
                   <div className="flex items-center gap-4">
                     <button onClick={togglePlay} className="hover:text-red-500 transition p-0.5">
@@ -360,7 +359,7 @@ function VideoView() {
             )}
           </div>
 
-          {/* Bottom Transcription Text Column Sections */}
+          {/* Transcript Scrolling Panels Layout */}
           <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-12">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div className="min-w-0">
