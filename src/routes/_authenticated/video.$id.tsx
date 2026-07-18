@@ -86,7 +86,7 @@ function TranscriptLineText({ line, active, dialect, t }: { line: TranscriptLine
                   {seg.text}
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="start" className="w-72" onClick={(e) => e.stopPropagation()}>
+              <PopoverContent align="start" className="w-72 max-w-[calc(100vw-2rem)]" onClick={(e) => e.stopPropagation()}>
                 <div className="grid gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-display font-semibold text-base" dir="ltr">{seg.text}</span>
@@ -178,7 +178,7 @@ function VideoView() {
 
   return (
     <AppShell activeLang={v.language_code}>
-      <div className="-mt-8 -mb-8">
+      <div className="-mt-8 -mb-8 overflow-x-hidden">
         <div className="w-screen relative left-1/2 -translate-x-1/2 bg-background">
           <div className="bg-black overflow-hidden h-[min(75vh,56.25vw)]">
             {videoPath ? (
@@ -207,7 +207,7 @@ function VideoView() {
             )}
           </div>
 
-          <div className="max-w-3xl mx-auto px-6 pt-6 pb-12">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-12">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <h1 className="font-display text-2xl font-bold text-foreground" dir="ltr">{v.title}</h1>
