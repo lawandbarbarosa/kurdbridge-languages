@@ -57,9 +57,9 @@ function Vocab() {
 
   const current = words[idx];
   const w = current.word;
-  const kurdish = dialect === "sorani" ? w.kurdish_sorani : w.kurdish_badini;
+  const kurdish = dialect === "badini" ? w.kurdish_badini : w.kurdish_sorani;
   const example = w.example_sentence;
-  const exampleTr = dialect === "sorani" ? w.example_sorani : w.example_badini;
+  const exampleTr = dialect === "badini" ? w.example_badini : w.example_sorani;
 
   async function answer(correct: boolean) {
     await review.mutateAsync({ wordId: w.id, correct });
