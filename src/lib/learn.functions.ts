@@ -17,7 +17,7 @@ export const getDashboard = createServerFn({ method: "POST" })
     ]);
     const activeLang = data.language ?? profile?.active_target_lang ?? null;
     let levelRow = null as null | { current_cefr: string };
-    let recentLesson = null as null | { id: string; title_sorani: string; title_badini: string };
+    let recentLesson = null as null | { id: string; title_sorani: string; title_badini: string; title_en: string | null };
     let dueCount = 0;
     let completedCount = 0;
     let wordsLearnedCount = 0;
@@ -32,7 +32,7 @@ export const getDashboard = createServerFn({ method: "POST" })
           .eq("vocab_words.language_code", activeLang),
         supabase
           .from("user_lesson_progress")
-          .select("id, passed, lesson_id, last_attempt_at, lessons!inner(title_sorani, title_badini, level_id, levels!inner(language_code))")
+          .select("id, passed, lesson_id, last_attempt_at, lessons!inner(title_sorani, title_badini, title_en, level_id, levels!inner(language_code))")
           .eq("user_id", userId)
           .eq("lessons.levels.language_code", activeLang)
           .order("last_attempt_at", { ascending: false })
@@ -48,9 +48,9 @@ export const getDashboard = createServerFn({ method: "POST" })
       dueCount = due?.length ?? 0;
       completedCount = (progress ?? []).filter((p: { passed: boolean }) => p.passed).length;
       wordsLearnedCount = vocabDone?.length ?? 0;
-      const recent = (progress ?? [])[0] as unknown as { lesson_id: string; lessons: { title_sorani: string; title_badini: string } } | undefined;
+      const recent = (progress ?? [])[0] as unknown as { lesson_id: string; lessons: { title_sorani: string; title_badini: string; title_en: string | null } } | undefined;
       if (recent) {
-        recentLesson = { id: recent.lesson_id, title_sorani: recent.lessons.title_sorani, title_badini: recent.lessons.title_badini };
+        recentLesson = { id: recent.lesson_id, title_sorani: recent.lessons.title_sorani, title_badini: recent.lessons.title_badini, title_en: recent.lessons.title_en };
       }
     }
     return { profile, languages: languages ?? [], activeLang, level: levelRow, recentLesson, dueCount, completedCount, wordsLearnedCount };
@@ -149,7 +149,7 @@ export const getLessonTree = createServerFn({ method: "POST" })
     const [{ data: levels }, { data: userLevel }] = await Promise.all([
       supabase
         .from("levels")
-        .select("id, cefr, order_index, lessons(id, order_index, title_sorani, title_badini, summary_sorani, summary_badini)")
+        .select("id, cefr, order_index, lessons(id, order_index, title_sorani, title_badini, title_en, summary_sorani, summary_badini, summary_en)")
         .eq("language_code", data.language)
         .order("order_index"),
       supabase
@@ -179,8 +179,10 @@ export const getLessonTree = createServerFn({ method: "POST" })
           id: l.id,
           title_sorani: l.title_sorani,
           title_badini: l.title_badini,
+          title_en: l.title_en,
           summary_sorani: l.summary_sorani,
           summary_badini: l.summary_badini,
+          summary_en: l.summary_en,
           order_index: l.order_index,
           passed,
           unlocked,
@@ -201,7 +203,7 @@ export const getLesson = createServerFn({ method: "POST" })
     const [{ data: lesson }, { data: exercises }] = await Promise.all([
       supabase
         .from("lessons")
-        .select("id, title_sorani, title_badini, grammar_md_sorani, grammar_md_badini, dialogue_json, level_id, levels(cefr, language_code)")
+        .select("id, title_sorani, title_badini, title_en, grammar_md_sorani, grammar_md_badini, grammar_md_en, dialogue_json, level_id, levels(cefr, language_code)")
         .eq("id", data.lessonId)
         .maybeSingle(),
       supabase.from("lesson_exercises").select("*").eq("lesson_id", data.lessonId).order("order_index"),
