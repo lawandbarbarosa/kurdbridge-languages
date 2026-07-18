@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useDialect } from "@/hooks/use-dialect";
@@ -7,6 +7,11 @@ import { BookOpen, Target, PlayCircle, Sparkles, ArrowLeft } from "lucide-react"
 import { DialectToggle } from "@/components/dialect-toggle";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
+  beforeLoad: async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data.user) throw redirect({ to: "/dashboard" });
+  },
   component: Landing,
 });
 
