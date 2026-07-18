@@ -110,7 +110,7 @@ function LessonsTab() {
 
   const openNew = () => {
     if (!q.data?.levelId) { toast.error("No level for this language/CEFR. Add one in the database first."); return; }
-    setEditing({ level_id: q.data.levelId, order_index: (q.data.lessons.length ?? 0), title_sorani: "", title_badini: "", dialogue_json: [] });
+    setEditing({ level_id: q.data.levelId, order_index: (q.data.lessons.length ?? 0), title_sorani: "", title_badini: "", title_en: "", dialogue_json: [] });
     setOpen(true);
   };
 
@@ -160,10 +160,13 @@ function LessonForm({ value, onChange }: { value: Record<string, unknown>; onCha
         <div><Label>Title (Sorani)</Label><Input value={(value.title_sorani ?? "") as string} onChange={(e) => set("title_sorani", e.target.value)} /></div>
       </div>
       <div><Label>Title (Badini)</Label><Input value={(value.title_badini ?? "") as string} onChange={(e) => set("title_badini", e.target.value)} /></div>
+      <div><Label>Title (English)</Label><Input value={(value.title_en ?? "") as string} onChange={(e) => set("title_en", e.target.value)} /></div>
       <div><Label>Summary (Sorani)</Label><Textarea value={(value.summary_sorani ?? "") as string} onChange={(e) => set("summary_sorani", e.target.value)} /></div>
       <div><Label>Summary (Badini)</Label><Textarea value={(value.summary_badini ?? "") as string} onChange={(e) => set("summary_badini", e.target.value)} /></div>
+      <div><Label>Summary (English)</Label><Textarea value={(value.summary_en ?? "") as string} onChange={(e) => set("summary_en", e.target.value)} /></div>
       <div><Label>Grammar (Sorani, Markdown)</Label><Textarea rows={5} value={(value.grammar_md_sorani ?? "") as string} onChange={(e) => set("grammar_md_sorani", e.target.value)} /></div>
       <div><Label>Grammar (Badini, Markdown)</Label><Textarea rows={5} value={(value.grammar_md_badini ?? "") as string} onChange={(e) => set("grammar_md_badini", e.target.value)} /></div>
+      <div><Label>Grammar (English, Markdown)</Label><Textarea rows={5} value={(value.grammar_md_en ?? "") as string} onChange={(e) => set("grammar_md_en", e.target.value)} /></div>
       <div>
         <Label>Dialogue JSON: [{"{"}"speaker","line","translation_ku"{"}"}]</Label>
         <Textarea rows={4} value={JSON.stringify(value.dialogue_json ?? [], null, 2)} onChange={(e) => { try { set("dialogue_json", JSON.parse(e.target.value)); } catch { /* keep typing */ } }} />
