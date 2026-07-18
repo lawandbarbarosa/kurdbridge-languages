@@ -87,9 +87,9 @@ function Vocab() {
           <span>{idx + 1} {t("of")} {words.length}</span>
           <span>{t("flashcards")}</span>
         </div>
-        <div className="bento-card p-10 text-center min-h-[380px] flex flex-col justify-center">
+        <div className="bento-card p-6 sm:p-10 text-center min-h-[320px] sm:min-h-[380px] flex flex-col justify-center">
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="text-5xl font-display font-bold" dir="ltr">{w.word}</div>
+            <div className="text-4xl sm:text-5xl font-display font-bold" dir="ltr">{w.word}</div>
             <button onClick={playAudio} className="p-2 rounded-full hover:bg-accent" title={t("play_audio")}>
               <Volume2 className="h-5 w-5 text-primary-ink" />
             </button>
