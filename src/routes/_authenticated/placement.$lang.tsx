@@ -59,7 +59,7 @@ function Placement() {
           </div>
           <h1 className="mt-6 font-display text-3xl font-bold">{t("placement_result")}</h1>
           <p className="mt-2 text-muted-foreground">{t("your_score")}: {result.score} / {result.total}</p>
-          <div className="mt-8 bento-card p-8">
+          <div className="mt-8 bento-card p-5 sm:p-8">
             <p className="text-sm text-muted-foreground">{t("placement_assigned")}</p>
             <div className="mt-2 font-display text-6xl font-bold text-primary-ink">{result.assigned}</div>
           </div>
@@ -97,7 +97,7 @@ function Placement() {
           <Progress value={((idx + 1) / questions.length) * 100} />
         </div>
 
-        <div className="bento-card p-8">
+        <div className="bento-card p-5 sm:p-8">
           <h2 className="font-display text-2xl font-semibold" dir="ltr">{q.question_json.prompt}</h2>
           <div className="mt-6 space-y-3">
             {q.question_json.choices.map((choice) => (
