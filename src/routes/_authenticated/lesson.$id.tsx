@@ -58,8 +58,8 @@ function LessonRunner() {
 
   const lesson = data.lesson;
   const exercises = data.exercises;
-  const title = dialect === "sorani" ? lesson.title_sorani : lesson.title_badini;
-  const grammar = dialect === "sorani" ? lesson.grammar_md_sorani : lesson.grammar_md_badini;
+  const title = dialect === "badini" ? lesson.title_badini : lesson.title_sorani;
+  const grammar = dialect === "badini" ? lesson.grammar_md_badini : lesson.grammar_md_sorani;
   const langCode: string = (lesson as unknown as { levels?: { language_code?: string } }).levels?.language_code ?? "en";
 
   if (step === "intro") {
@@ -79,7 +79,7 @@ function LessonRunner() {
                   <div key={i} className="border-r-4 border-primary/40 pr-4">
                     <div className="font-medium" dir="ltr"><span className="text-muted-foreground">{line.speaker}:</span> {line.text}</div>
                     <div className="text-sm text-muted-foreground mt-0.5">
-                      {dialect === "sorani" ? line.translation_sorani : line.translation_badini}
+                      {dialect === "badini" ? line.translation_badini : line.translation_sorani}
                     </div>
                   </div>
                 ))}
@@ -115,9 +115,9 @@ function LessonRunner() {
 
           <div className="bento-card p-8">
             <h2 className="font-display text-2xl font-semibold" dir="ltr">{prompt.prompt}</h2>
-            {(dialect === "sorani" ? prompt.hint_sorani : prompt.hint_badini) && (
+            {(dialect === "badini" ? prompt.hint_badini : prompt.hint_sorani) && (
               <p className="mt-2 text-sm text-muted-foreground">
-                {dialect === "sorani" ? prompt.hint_sorani : prompt.hint_badini}
+                {dialect === "badini" ? prompt.hint_badini : prompt.hint_sorani}
               </p>
             )}
             <div className="mt-6 space-y-3">
