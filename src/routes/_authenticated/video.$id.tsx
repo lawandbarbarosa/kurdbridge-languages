@@ -374,9 +374,14 @@ function VideoView() {
 
         {/* Transcript Body Section */}
         <div className="space-y-6">
+          {/* Added webkit-mask-image and mask-image gradients to fade text cleanly at the bounds */}
           <div
             ref={viewportRef}
-            className="relative h-[400px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300 border-t pt-4"
+            className="relative h-[400px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300 border-t pt-8 pb-12"
+            style={{
+              WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
+              maskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
+            }}
           >
             {transcript.length === 0 ? (
               <p className="text-muted-foreground py-4">{t("no_words")}</p>
