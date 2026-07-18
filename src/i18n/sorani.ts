@@ -45,6 +45,7 @@ const s = {
   skip_placement: "دەستپێبکە لە A1",
 
   // Dashboard
+  menu: "مینیو",
   dashboard: "سەرەکی",
   welcome_back: "بەخێربێیتەوە",
   current_level: "ئاستی ئێستا",
