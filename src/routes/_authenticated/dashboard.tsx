@@ -64,7 +64,7 @@ function Dashboard() {
           <h1 className="font-display text-3xl md:text-4xl font-bold mt-1">{displayName}</h1>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {availableLanguages.map((l) => (
               <button
                 key={l.code}
@@ -84,7 +84,7 @@ function Dashboard() {
             ))}
           </div>
           {comingSoonLanguages.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               {comingSoonLanguages.map((l) => (
                 <div
                   key={l.code}
@@ -106,13 +106,13 @@ function Dashboard() {
       {/* Bento grid */}
       <div className="grid grid-cols-1 md:grid-cols-6 gap-4 auto-rows-[minmax(120px,auto)]">
         {/* Big continue card */}
-        <div className="md:col-span-4 md:row-span-2 bento-card p-8 relative overflow-hidden">
+        <div className="md:col-span-4 md:row-span-2 bento-card p-5 sm:p-8 relative overflow-hidden">
           <div className="absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
           <div className="relative">
             <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider">
               <Sparkles className="h-3.5 w-3.5" /> {t("continue_learning")}
             </div>
-            <h2 className="mt-2 font-display text-3xl font-semibold">
+            <h2 className="mt-2 font-display text-2xl sm:text-3xl font-semibold">
               {data.recentLesson
                 ? (dialect === "badini"
                     ? data.recentLesson.title_badini
@@ -124,7 +124,7 @@ function Dashboard() {
             <p className="mt-3 text-muted-foreground max-w-md">
               {data.recentLesson ? t("continue_lesson") : t("hero_sub")}
             </p>
-            <div className="mt-6 flex gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               {data.recentLesson ? (
                 <Button asChild size="lg" className="gradient-brand shadow-elegant">
                   <Link to={`/lesson/${data.recentLesson.id}`}>
