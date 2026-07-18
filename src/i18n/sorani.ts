@@ -2,7 +2,7 @@
 const s = {
   // Common
   app_name: "بەتلیس",
-  tagline: "فێربوونی زمان بۆ کوردەکان",
+  tagline: "فێربوونی زمان بۆ کورد زمانان",
   loading: "چاوەڕوانبە...",
   save: "پاشەکەوت",
   cancel: "پاشگەزبوونەوە",
@@ -46,7 +46,7 @@ const s = {
 
   // Dashboard
   dashboard: "سەرەکی",
-  welcome_back: "بەخێرگەڕایتەوە",
+  welcome_back: "بەخێربێیتەوە",
   current_level: "ئاستی ئێستا",
   streak: "زنجیرەی ڕۆژانە",
   days: "ڕۆژ",
@@ -64,7 +64,7 @@ const s = {
   no_due: "هیچ شتێک نییە بۆ پێداچوونەوە",
 
   // Lesson / tree
-  lesson_tree: "دارە وانەکان",
+  lesson_tree: "داری وانەکان",
   level: "ئاست",
   lesson: "وانە",
   grammar: "ڕێزمان",
