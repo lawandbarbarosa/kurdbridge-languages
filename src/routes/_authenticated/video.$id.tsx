@@ -178,8 +178,8 @@ function VideoView() {
 
   return (
     <AppShell activeLang={v.language_code}>
-      <div className="-mt-8 -mb-8 overflow-x-hidden">
-        <div className="w-screen relative left-1/2 -translate-x-1/2 bg-background">
+      <div className="-mt-8 -mb-8">
+        <div className="-mx-4 sm:-mx-6 bg-background">
           <div className="bg-black overflow-hidden h-[min(75dvh,56.25vw)]">
             {videoPath ? (
               signedUrl ? (
