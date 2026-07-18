@@ -58,9 +58,7 @@ export function AppShell({ children, activeLang }: Props) {
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur">
         <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between gap-4">
           <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl squircle gradient-brand grid place-items-center shadow-soft">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
-            </div>
+            <img src="/logo.png" alt={t("app_name")} className="h-9 w-9 rounded-xl squircle object-cover shadow-soft" />
             <span className="font-display text-lg font-semibold">{t("app_name")}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-1">
