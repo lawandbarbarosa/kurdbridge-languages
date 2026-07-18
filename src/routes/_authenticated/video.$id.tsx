@@ -252,13 +252,13 @@ function VideoView() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         
         {/* Safe, self-contained player frame canvas (No dangerous negative margin trims) */}
-        <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl aspect-[4/3] sm:aspect-video max-h-[85vh] flex flex-col justify-between group">
+        <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl max-h-[85vh] flex flex-col justify-between group">
           <div className="w-full h-full flex items-center justify-center grow bg-neutral-950">
             {videoPath ? (
               signedUrl ? (
                 <video
                   ref={videoRef}
-                  className="w-full h-full object-contain cursor-pointer"
+                  className="w-full h-auto max-h-[85vh] cursor-pointer block"
                   src={signedUrl}
                   playsInline
                   onClick={togglePlay}
