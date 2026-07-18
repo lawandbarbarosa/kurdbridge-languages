@@ -253,29 +253,31 @@
    already renders in Noto Kufi Arabic, a flat/geometric Kufic-style face
    chosen for exactly this kind of clarity, so it's left as-is.
    ========================================================================== */
-[data-a11y-typeface="dyslexic"] {
-  line-height: 1.7;
-}
-[data-a11y-typeface="dyslexic"] p,
-[data-a11y-typeface="dyslexic"] li,
-[data-a11y-typeface="dyslexic"] span,
-[data-a11y-typeface="dyslexic"] label {
-  font-weight: 500;
-}
-[data-a11y-typeface="dyslexic"] p {
-  margin-bottom: 1.1em;
-}
-[data-a11y-typeface="dyslexic"] em,
-[data-a11y-typeface="dyslexic"] i {
-  font-style: normal;
-  text-decoration: underline;
-  text-decoration-style: dotted;
-}
-[data-a11y-typeface="dyslexic"]:not([dir="rtl"]) {
-  --font-sans: "Atkinson Hyperlegible Next Variable", "Manrope Variable", sans-serif;
-  --font-display: "Atkinson Hyperlegible Next Variable", "Sora Variable", sans-serif;
-  letter-spacing: 0.015em;
-  word-spacing: 0.12em;
+@layer base {
+  [data-a11y-typeface="dyslexic"] {
+    line-height: 1.7;
+  }
+  [data-a11y-typeface="dyslexic"] p,
+  [data-a11y-typeface="dyslexic"] li,
+  [data-a11y-typeface="dyslexic"] span,
+  [data-a11y-typeface="dyslexic"] label {
+    font-weight: 500;
+  }
+  [data-a11y-typeface="dyslexic"] p {
+    margin-bottom: 1.1em;
+  }
+  [data-a11y-typeface="dyslexic"] em,
+  [data-a11y-typeface="dyslexic"] i {
+    font-style: normal;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+  }
+  [data-a11y-typeface="dyslexic"]:not([dir="rtl"]) {
+    --font-sans: "Atkinson Hyperlegible Next Variable", "Manrope Variable", sans-serif;
+    --font-display: "Atkinson Hyperlegible Next Variable", "Sora Variable", sans-serif;
+    letter-spacing: 0.015em;
+    word-spacing: 0.12em;
+  }
 }
 
 @utility bento-card {
