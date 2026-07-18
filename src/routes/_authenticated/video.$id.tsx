@@ -157,16 +157,33 @@ function VideoView() {
   const activeIdx = transcript.reduce((acc, l, i) => ((l.t ?? 0) <= currentTime + 0.05 ? i : acc), -1);
 
   // Lyrics-style auto-follow: the visible window shifts to keep the active line
-  // centered. There is no manual scrollbar here — the only way to move through
-  // the transcript is to let the video play, or click a line to skip to it.
+  // centered as the video plays, or jumps when a line is clicked.
+  //
+  // Recalculated not just when the active line changes, but whenever the
+  // viewport or active line's actual rendered size changes — e.g. a window
+  // resize, a tablet rotation, or the web fonts (loaded async) swapping in
+  // and reflowing text after the first paint. Without this, a stale offset
+  // computed against the pre-resize/pre-font-load layout stays applied via
+  // the transform below, which can visually shove the caption out of frame
+  // even though the container itself is sized correctly.
   useLayoutEffect(() => {
     const idx = activeIdx >= 0 ? activeIdx : 0;
-    const activeEl = lineRefs.current[idx];
+    const recalc = () => {
+      const activeEl = lineRefs.current[idx];
+      const viewport = viewportRef.current;
+      if (activeEl && viewport) {
+        const offset = activeEl.offsetTop - viewport.clientHeight / 2 + activeEl.offsetHeight / 2;
+        setScrollOffset(Math.max(0, offset));
+      }
+    };
+    recalc();
     const viewport = viewportRef.current;
-    if (activeEl && viewport) {
-      const offset = activeEl.offsetTop - viewport.clientHeight / 2 + activeEl.offsetHeight / 2;
-      setScrollOffset(Math.max(0, offset));
-    }
+    const activeEl = lineRefs.current[idx];
+    if (typeof ResizeObserver === "undefined" || !viewport) return;
+    const ro = new ResizeObserver(recalc);
+    ro.observe(viewport);
+    if (activeEl) ro.observe(activeEl);
+    return () => ro.disconnect();
   }, [activeIdx, transcript.length]);
 
   if (isLoading || !data || !v) return <AppShell><div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin" /></div></AppShell>;
@@ -222,10 +239,17 @@ function VideoView() {
               <p className="mt-3 text-xs text-muted-foreground">{t("tap_word_hint")}</p>
             )}
 
-            {/* Spotify-style lyrics viewport: fixed height, no scrollbar. The window
-                only follows video playback, or jumps when a line is clicked (which
-                skips the video to that point) — it can't be scrolled by hand. */}
-            <div ref={viewportRef} className="relative mt-8 h-[min(62dvh,420px)] sm:h-[min(50dvh,420px)] overflow-hidden">
+            {/* Spotify-style lyrics viewport: the window normally only follows video
+                playback, or jumps when a line is clicked (which skips the video to
+                that point) — there's no visible scrollbar for manual scrolling.
+                overflow is still `auto` (scrollbar hidden) rather than `hidden` as a
+                safety net: if a caption is ever taller than the box (very long line,
+                large system font size, etc.), it stays reachable by touch/wheel
+                scroll instead of being permanently invisible. */}
+            <div
+              ref={viewportRef}
+              className="relative mt-8 h-[min(64dvh,440px)] sm:h-[min(52dvh,440px)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {transcript.length === 0 ? (
                 <p className="text-muted-foreground py-4">{t("no_words")}</p>
               ) : (
