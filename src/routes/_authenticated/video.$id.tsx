@@ -152,7 +152,7 @@ function VideoView() {
   const v = data?.video;
   const transcript: TranscriptLine[] = v && Array.isArray(v.transcript_json) ? (v.transcript_json as unknown as TranscriptLine[]) : [];
 
-  // 1. Fetch Signed URL safely
+  // Fetch Signed Storage URL safely
   useEffect(() => {
     if (!videoPath) { setSignedUrl(null); return; }
     let isCurrent = true;
@@ -164,7 +164,7 @@ function VideoView() {
     return () => { isCurrent = false; };
   }, [videoPath]);
 
-  // 2. Continuous Duration Fallback until video metadata is fully mounted
+  // Duration safety net calculation
   useEffect(() => {
     if (transcript.length > 0 && duration === 0) {
       const calculatedEnd = (transcript[transcript.length - 1].t ?? 0) + 5;
@@ -172,10 +172,9 @@ function VideoView() {
     }
   }, [transcript, duration]);
 
-  // Derive Active Line Highlight Index
   const activeIdx = transcript.reduce((acc, l, i) => ((l.t ?? 0) <= currentTime + 0.05 ? i : acc), -1);
 
-  // 3. Smooth, Optimized Auto-Follow
+  // Auto-Follow scrolling tracker execution
   useLayoutEffect(() => {
     const idx = activeIdx >= 0 ? activeIdx : 0;
     const viewport = viewportRef.current;
@@ -215,7 +214,6 @@ function VideoView() {
     }
   };
 
-  // Allows tracking clicking anywhere along the continuous bar path
   const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!timelineRef.current || duration === 0) return;
     const rect = timelineRef.current.getBoundingClientRect();
@@ -247,172 +245,169 @@ function VideoView() {
     return `${m}:${s < 10 ? "0" : ""}${s}`;
   };
 
-  // Safe percentage calculation to prevent NaN issues
   const overallProgressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <AppShell activeLang={v.language_code}>
-      <div className="-mt-8 -mb-8">
-        <div className="-mx-4 sm:-mx-6 bg-background">
-          
-          {/* Main Video Screen Container */}
-          <div className="relative bg-black overflow-hidden h-[min(75dvh,56.25vw)] flex flex-col justify-between group">
-            <div className="w-full h-full flex items-center justify-center grow">
-              {videoPath ? (
-                signedUrl ? (
-                  <video
-                    ref={videoRef}
-                    className="w-full h-full object-contain cursor-pointer"
-                    src={signedUrl}
-                    playsInline
-                    onClick={togglePlay}
-                    onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
-                    onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-                    onPlay={() => setIsPlaying(true)}
-                    onPause={() => setIsPlaying(false)}
-                  />
-                ) : (
-                  <Loader2 className="h-6 w-6 animate-spin text-white/70" />
-                )
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+        
+        {/* Safe, self-contained player frame canvas (No dangerous negative margin trims) */}
+        <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl aspect-video max-h-[70vh] flex flex-col justify-between group">
+          <div className="w-full h-full flex items-center justify-center grow bg-neutral-950">
+            {videoPath ? (
+              signedUrl ? (
+                <video
+                  ref={videoRef}
+                  className="w-full h-full object-contain cursor-pointer"
+                  src={signedUrl}
+                  playsInline
+                  onClick={togglePlay}
+                  onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                  onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                />
               ) : (
-                <div className="text-white/70">No standard video source uploaded</div>
-              )}
-            </div>
-
-            {/* Custom YouTube-Style Controls Panel Overlay */}
-            {videoPath && signedUrl && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-3 pt-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
-                
-                {/* 100% UNTRIMMED CONTINUOUS SLIDER TRACK */}
-                <div 
-                  ref={timelineRef}
-                  onClick={handleTimelineClick}
-                  className="relative w-full h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer rounded-full mb-3 overflow-visible group/timeline"
-                >
-                  {/* Active Red Playback Fill Progress Track */}
-                  <div 
-                    className="absolute top-0 left-0 h-full bg-red-600 rounded-full pointer-events-none"
-                    style={{ width: `${overallProgressPercent}%` }}
-                  />
-
-                  {/* Absolute Positional Segment Dividers */}
-                  {transcript.map((line, idx) => {
-                    const timePosition = line.t ?? 0;
-                    const leftPercent = duration > 0 ? (timePosition / duration) * 100 : 0;
-                    
-                    if (leftPercent <= 0 || leftPercent >= 100) return null;
-
-                    return (
-                      <div 
-                        key={idx}
-                        className="absolute top-0 w-[3px] h-full bg-black/90 z-10 pointer-events-none group-hover/timeline:w-[4px]"
-                        style={{ left: `${leftPercent}%` }}
-                      />
-                    );
-                  })}
-
-                  {/* Interactive Floating Hover Preview Panels */}
-                  {transcript.map((line, idx) => {
-                    const startTime = line.t ?? 0;
-                    const nextLine = transcript[idx + 1];
-                    const endTime = nextLine ? (nextLine.t ?? startTime) : duration;
-                    
-                    const leftPercent = duration > 0 ? (startTime / duration) * 100 : 0;
-                    const rightPercent = duration > 0 ? (endTime / duration) * 100 : 100;
-                    const segmentWidth = rightPercent - leftPercent;
-
-                    return (
-                      <div
-                        key={`hover-${idx}`}
-                        className="absolute top-0 h-full group/seg cursor-pointer"
-                        style={{ left: `${leftPercent}%`, width: `${segmentWidth}%` }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          seekTo(startTime);
-                        }}
-                      >
-                        <div className="absolute hidden group-hover/seg:block bottom-6 left-1/2 -translate-x-1/2 bg-neutral-950/95 text-white text-[11px] font-sans tracking-wide px-3 py-2 rounded-md border border-white/10 shadow-2xl whitespace-nowrap z-50 pointer-events-none">
-                          <span className="text-red-500 font-bold mr-1.5">{formatTime(startTime)}</span> 
-                          {line.en.substring(0, 35)}{line.en.length > 35 ? "..." : ""}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Bottom Media Bar Controls Panel */}
-                <div className="flex items-center justify-between text-white text-sm px-1">
-                  <div className="flex items-center gap-4">
-                    <button onClick={togglePlay} className="hover:text-red-500 transition p-0.5">
-                      {isPlaying ? <Pause className="h-4 w-4 fill-white" /> : <Play className="h-4 w-4 fill-white" />}
-                    </button>
-                    <button onClick={toggleMute} className="hover:text-red-500 transition p-0.5">
-                      {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                    </button>
-                    <span className="text-xs text-neutral-300 font-mono tracking-tighter selection:bg-transparent">
-                      {formatTime(currentTime)} / {formatTime(duration)}
-                    </span>
-                  </div>
-                </div>
-
-              </div>
+                <Loader2 className="h-6 w-6 animate-spin text-white/70" />
+              )
+            ) : (
+              <div className="text-white/70">No video canvas source configured</div>
             )}
           </div>
 
-          {/* Transcript Scrolling Panels Layout */}
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6 pb-12">
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div className="min-w-0">
-                <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground break-words" dir="ltr">
-                  {v.title}
-                </h1>
-                {v.description && <p className="text-muted-foreground mt-1 text-sm break-words">{v.description}</p>}
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setShowTr((s) => !s)} className="shrink-0">
-                {showTr ? <EyeOff className="ml-2 h-4 w-4" /> : <Eye className="ml-2 h-4 w-4" />}
-                {showTr ? t("hide_translation") : t("show_translation")}
-              </Button>
-            </div>
-            
-            {transcript.some((l) => (l.highlights ?? []).length > 0) && (
-              <p className="mt-3 text-xs text-muted-foreground">{t("tap_word_hint")}</p>
-            )}
+          {/* Action Overlay Controls Panel */}
+          {videoPath && signedUrl && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-4 pt-12 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+              
+              {/* Perfectly Uniform Continuous Track Layout */}
+              <div 
+                ref={timelineRef}
+                onClick={handleTimelineClick}
+                className="relative w-full h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer rounded-full mb-3 overflow-visible group/timeline"
+              >
+                {/* Clean, Full-Span Red Playback Progress Indicator */}
+                <div 
+                  className="absolute top-0 left-0 h-full bg-red-600 rounded-full pointer-events-none"
+                  style={{ width: `${overallProgressPercent}%` }}
+                />
 
-            <div
-              ref={viewportRef}
-              className="relative mt-8 h-[min(64dvh,440px)] sm:h-[min(52dvh,440px)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300"
-            >
-              {transcript.length === 0 ? (
-                <p className="text-muted-foreground py-4">{t("no_words")}</p>
-              ) : (
-                <div
-                  className="transition-transform duration-500 ease-out"
-                  style={{ transform: `translateY(${-scrollOffset}px)` }}
-                >
-                  {transcript.map((line, i) => {
-                    const active = i === activeIdx;
-                    return (
-                      <div
-                        key={i}
-                        ref={(el) => { lineRefs.current[i] = el; }}
-                        onClick={() => seekTo(line.t ?? 0)}
-                        className="py-3 cursor-pointer"
-                      >
-                        <TranscriptLineText line={line} active={active} dialect={dialect} t={t} />
-                        {showTr && (line.ku_sorani || line.ku_badini) && (
-                          <div className={cn("mt-1 text-sm font-kurdish break-words transition-colors", active ? "text-foreground/70" : "text-muted-foreground")}>
-                            {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
-                          </div>
-                        )}
+                {/* Micro Segment Break Dividers */}
+                {transcript.map((line, idx) => {
+                  const timePosition = line.t ?? 0;
+                  const leftPercent = duration > 0 ? (timePosition / duration) * 100 : 0;
+                  
+                  if (leftPercent <= 0 || leftPercent >= 100) return null;
+
+                  return (
+                    <div 
+                      key={idx}
+                      className="absolute top-0 w-[2px] h-full bg-black/80 z-10 pointer-events-none"
+                      style={{ left: `${leftPercent}%` }}
+                    />
+                  );
+                })}
+
+                {/* Floating Interactive Hover Zones */}
+                {transcript.map((line, idx) => {
+                  const startTime = line.t ?? 0;
+                  const nextLine = transcript[idx + 1];
+                  const endTime = nextLine ? (nextLine.t ?? startTime) : duration;
+                  
+                  const leftPercent = duration > 0 ? (startTime / duration) * 100 : 0;
+                  const rightPercent = duration > 0 ? (endTime / duration) * 100 : 100;
+                  const segmentWidth = rightPercent - leftPercent;
+
+                  return (
+                    <div
+                      key={`hover-${idx}`}
+                      className="absolute top-0 h-full group/seg cursor-pointer"
+                      style={{ left: `${leftPercent}%`, width: `${segmentWidth}%` }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        seekTo(startTime);
+                      }}
+                    >
+                      <div className="absolute hidden group-hover/seg:block bottom-6 left-1/2 -translate-x-1/2 bg-neutral-950/95 text-white text-[11px] font-sans px-3 py-1.5 rounded border border-white/10 shadow-2xl whitespace-nowrap z-50 pointer-events-none">
+                        <span className="text-red-500 font-bold mr-1.5">{formatTime(startTime)}</span> 
+                        {line.en.substring(0, 30)}{line.en.length > 30 ? "..." : ""}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+                    </div>
+                  );
+                })}
+              </div>
 
+              {/* Deck Lower Controls Action Center */}
+              <div className="flex items-center justify-between text-white text-sm px-0.5">
+                <div className="flex items-center gap-4">
+                  <button onClick={togglePlay} className="hover:text-red-500 transition p-0.5">
+                    {isPlaying ? <Pause className="h-4 w-4 fill-white" /> : <Play className="h-4 w-4 fill-white" />}
+                  </button>
+                  <button onClick={toggleMute} className="hover:text-red-500 transition p-0.5">
+                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  </button>
+                  <span className="text-xs text-neutral-300 font-mono tracking-tighter selection:bg-transparent">
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {/* Info & Transcript Body Section */}
+        <div className="space-y-6">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground break-words" dir="ltr">
+                {v.title}
+              </h1>
+              {v.description && <p className="text-muted-foreground mt-1 text-sm break-words">{v.description}</p>}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setShowTr((s) => !s)} className="shrink-0">
+              {showTr ? <EyeOff className="ml-2 h-4 w-4" /> : <Eye className="ml-2 h-4 w-4" />}
+              {showTr ? t("hide_translation") : t("show_translation")}
+            </Button>
+          </div>
+          
+          {transcript.some((l) => (l.highlights ?? []).length > 0) && (
+            <p className="text-xs text-muted-foreground">{t("tap_word_hint")}</p>
+          )}
+
+          <div
+            ref={viewportRef}
+            className="relative h-[400px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300 border-t pt-4"
+          >
+            {transcript.length === 0 ? (
+              <p className="text-muted-foreground py-4">{t("no_words")}</p>
+            ) : (
+              <div
+                className="transition-transform duration-500 ease-out"
+                style={{ transform: `translateY(${-scrollOffset}px)` }}
+              >
+                {transcript.map((line, i) => {
+                  const active = i === activeIdx;
+                  return (
+                    <div
+                      key={i}
+                      ref={(el) => { lineRefs.current[i] = el; }}
+                      onClick={() => seekTo(line.t ?? 0)}
+                      className="py-3 cursor-pointer"
+                    >
+                      <TranscriptLineText line={line} active={active} dialect={dialect} t={t} />
+                      {showTr && (line.ku_sorani || line.ku_badini) && (
+                        <div className={cn("mt-1 text-sm font-kurdish break-words transition-colors", active ? "text-foreground/70" : "text-muted-foreground")}>
+                          {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
+
       </div>
     </AppShell>
   );
