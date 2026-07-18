@@ -64,7 +64,19 @@ function buildSegments(words: string[], highlights: WordHighlight[]): TextSegmen
   return segments;
 }
 
-function TranscriptLineText({ line, active, dialect, t }: { line: TranscriptLine; active: boolean; dialect: string; t: (key: TranslationKey) => string }) {
+function TranscriptLineText({ 
+  line, 
+  active, 
+  dialect, 
+  t,
+  onHighlightClick 
+}: { 
+  line: TranscriptLine; 
+  active: boolean; 
+  dialect: string; 
+  t: (key: TranslationKey) => string;
+  onHighlightClick: () => void;
+}) {
   const words = tokenizeWords(line.en);
   const segments = buildSegments(words, line.highlights ?? []);
   return (
@@ -83,7 +95,10 @@ function TranscriptLineText({ line, active, dialect, t }: { line: TranscriptLine
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onHighlightClick();
+                  }}
                   className="underline decoration-dotted decoration-2 underline-offset-4 hover:opacity-75 rounded transition"
                 >
                   {seg.text}
@@ -182,7 +197,6 @@ function VideoView() {
     if (!viewport || !activeEl) return;
 
     const recalc = () => {
-      // Adjusted to align exactly with the top of the container
       const offset = activeEl.offsetTop;
       setScrollOffset(Math.max(0, offset));
     };
@@ -230,6 +244,12 @@ function VideoView() {
       } else {
         videoRef.current.play().catch(() => {});
       }
+    }
+  };
+
+  const pauseVideo = () => {
+    if (videoRef.current && isPlaying) {
+      videoRef.current.pause();
     }
   };
 
@@ -379,7 +399,13 @@ function VideoView() {
                       onClick={() => seekTo(line.t ?? 0)}
                       className="py-3 cursor-pointer"
                     >
-                      <TranscriptLineText line={line} active={active} dialect={dialect} t={t} />
+                      <TranscriptLineText 
+                        line={line} 
+                        active={active} 
+                        dialect={dialect} 
+                        t={t} 
+                        onHighlightClick={pauseVideo}
+                      />
                       {showTr && (line.ku_sorani || line.ku_badini) && (
                         <div className={cn("mt-1 text-sm font-kurdish break-words transition-colors", active ? "text-foreground/70" : "text-muted-foreground")}>
                           {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
