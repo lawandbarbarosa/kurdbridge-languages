@@ -75,12 +75,12 @@ function LessonRunner() {
       <AppShell activeLang={langCode}>
         <div className="max-w-3xl mx-auto py-6">
           <button onClick={() => navigate({ to: `/learn/${langCode}` })} className="text-sm text-muted-foreground hover:text-foreground mb-4">← {t("lesson_tree")}</button>
-          <h1 className="font-display text-4xl font-bold">{title}</h1>
-          <div className="mt-8 bento-card p-8 whitespace-pre-wrap leading-loose">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold">{title}</h1>
+          <div className="mt-8 bento-card p-5 sm:p-8 whitespace-pre-wrap leading-loose">
             {grammar}
           </div>
           {Array.isArray(lesson.dialogue_json) && lesson.dialogue_json.length > 0 && (
-            <div className="mt-6 bento-card p-6">
+            <div className="mt-6 bento-card p-4 sm:p-6">
               <div className="text-xs uppercase tracking-wider text-muted-foreground mb-3">{t("dialogue")}</div>
               <div className="space-y-3">
                 {(lesson.dialogue_json as Array<{ speaker: string; text: string; translation_sorani?: string; translation_badini?: string }>).map((line, i) => (
@@ -121,7 +121,7 @@ function LessonRunner() {
             <Progress value={((idx + 1) / exercises.length) * 100} />
           </div>
 
-          <div className="bento-card p-8">
+          <div className="bento-card p-5 sm:p-8">
             <h2 className="font-display text-2xl font-semibold" dir="ltr">{prompt.prompt}</h2>
             {(dialect === "badini" ? prompt.hint_badini : prompt.hint_sorani) && (
               <p className="mt-2 text-sm text-muted-foreground">
