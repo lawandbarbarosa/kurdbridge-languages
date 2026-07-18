@@ -58,8 +58,16 @@ function LessonRunner() {
 
   const lesson = data.lesson;
   const exercises = data.exercises;
-  const title = dialect === "badini" ? lesson.title_badini : lesson.title_sorani;
-  const grammar = dialect === "badini" ? lesson.grammar_md_badini : lesson.grammar_md_sorani;
+  const title = dialect === "badini"
+    ? lesson.title_badini
+    : dialect === "english"
+    ? (lesson.title_en ?? lesson.title_sorani)
+    : lesson.title_sorani;
+  const grammar = dialect === "badini"
+    ? lesson.grammar_md_badini
+    : dialect === "english"
+    ? (lesson.grammar_md_en ?? lesson.grammar_md_sorani)
+    : lesson.grammar_md_sorani;
   const langCode: string = (lesson as unknown as { levels?: { language_code?: string } }).levels?.language_code ?? "en";
 
   if (step === "intro") {
