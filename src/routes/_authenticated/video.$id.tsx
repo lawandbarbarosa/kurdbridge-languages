@@ -320,16 +320,15 @@ function VideoView() {
             )}
           </div>
 
-          {/* Combined Actions & Timeline Controls Footer - Unconditionally Visible & Positioned Ultra-Low */}
+          {/* Combined Actions & Timeline Controls Footer */}
           {videoPath && signedUrl && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3 pt-6 z-20 flex items-center gap-4 text-white">
               
-              {/* Controls Stack Left Alignment */}
               <div className="flex items-center gap-3 shrink-0">
-                <button onClick={togglePlay} className="hover:text-red-500 transition p-1">
+                <button onClick={togglePlay} className="hover:text-neutral-300 transition p-1">
                   {isPlaying ? <Pause className="h-4 w-4 fill-white" /> : <Play className="h-4 w-4 fill-white" />}
                 </button>
-                <button onClick={toggleMute} className="hover:text-red-500 transition p-1">
+                <button onClick={toggleMute} className="hover:text-neutral-300 transition p-1">
                   {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
                 </button>
                 <span className="text-xs text-neutral-300 font-mono tracking-tighter select-none min-w-[70px]">
@@ -337,19 +336,17 @@ function VideoView() {
                 </span>
               </div>
 
-              {/* Perfectly Uniform Inline Track Layout */}
               <div 
                 ref={timelineRef}
                 onClick={handleTimelineClick}
                 className="relative flex-1 h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer rounded-full overflow-visible group/timeline"
               >
-                {/* Clean, Full-Span Red Playback Progress Indicator */}
+                {/* Changed background from bg-red-600 to bg-white */}
                 <div 
-                  className="absolute top-0 left-0 h-full bg-red-600 rounded-full pointer-events-none"
+                  className="absolute top-0 left-0 h-full bg-white rounded-full pointer-events-none"
                   style={{ width: `${overallProgressPercent}%` }}
                 />
 
-                {/* Floating Interactive Hover Zones */}
                 {transcript.map((line, idx) => {
                   const startTime = line.t ?? 0;
                   const nextLine = transcript[idx + 1];
@@ -370,7 +367,7 @@ function VideoView() {
                       }}
                     >
                       <div className="absolute hidden group-hover/seg:block bottom-6 left-1/2 -translate-x-1/2 bg-neutral-950/95 text-white text-[11px] font-sans px-3 py-1.5 rounded border border-white/10 shadow-2xl whitespace-nowrap z-50 pointer-events-none">
-                        <span className="text-red-500 font-bold mr-1.5">{formatTime(startTime)}</span> 
+                        <span className="text-neutral-400 font-bold mr-1.5">{formatTime(startTime)}</span> 
                         {line.en.substring(0, 30)}{line.en.length > 30 ? "..." : ""}
                       </div>
                     </div>
@@ -384,10 +381,6 @@ function VideoView() {
 
         {/* Transcript Body Section */}
         <div className="space-y-6">
-          {transcript.some((l) => (l.highlights ?? []).length > 0) && (
-            <p className="text-xs text-muted-foreground">{t("tap_word_hint")}</p>
-          )}
-
           <div
             ref={viewportRef}
             className="relative h-[400px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300 border-t pt-4"
