@@ -8,10 +8,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDialect } from "@/hooks/use-dialect";
 import type { TranslationKey } from "@/i18n/sorani";
 import { AppShell } from "@/components/app-shell";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Loader2, Eye, EyeOff, Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Loader2, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const paramsSchema = z.object({ id: z.string().uuid() });
@@ -154,7 +153,6 @@ function VideoView() {
     queryFn: () => fn({ data: { id } }),
   });
 
-  const [showTr, setShowTr] = useState(true);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -282,18 +280,14 @@ function VideoView() {
     <AppShell activeLang={v.language_code}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         
-        {/* Header Action Context Layout */}
+        {/* Header Action Context Layout without Show/Hide Button */}
         <div className="flex items-start justify-between gap-4 flex-wrap pb-2">
           <div className="min-w-0 flex-1">
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground break-words" dir="ltr">
+            <h1 className="font-display text-lg sm:text-2xl font-bold text-foreground break-words" dir="ltr">
               {v.title}
             </h1>
             {v.description && <p className="text-muted-foreground mt-1 text-sm break-words">{v.description}</p>}
           </div>
-          <Button variant="outline" size="sm" onClick={() => setShowTr((s) => !s)} className="shrink-0">
-            {showTr ? <EyeOff className="ml-2 h-4 w-4" /> : <Eye className="ml-2 h-4 w-4" />}
-            {showTr ? t("hide_translation") : t("show_translation")}
-          </Button>
         </div>
 
         {/* Safe, self-contained player frame canvas */}
@@ -341,7 +335,6 @@ function VideoView() {
                 onClick={handleTimelineClick}
                 className="relative flex-1 h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer rounded-full overflow-visible group/timeline"
               >
-                {/* Changed background from bg-red-600 to bg-white */}
                 <div 
                   className="absolute top-0 left-0 h-full bg-white rounded-full pointer-events-none"
                   style={{ width: `${overallProgressPercent}%` }}
@@ -409,7 +402,7 @@ function VideoView() {
                         onHighlightClick={pauseVideo}
                         onHighlightClose={playVideo}
                       />
-                      {showTr && (line.ku_sorani || line.ku_badini) && (
+                      {(line.ku_sorani || line.ku_badini) && (
                         <div className={cn("mt-1 text-sm font-kurdish break-words transition-colors", active ? "text-foreground/70" : "text-muted-foreground")}>
                           {dialect === "sorani" ? line.ku_sorani : dialect === "badini" ? line.ku_badini : (line.ku_sorani ?? line.ku_badini)}
                         </div>
