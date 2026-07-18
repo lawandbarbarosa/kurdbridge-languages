@@ -7,7 +7,7 @@ import { useDialect } from "@/hooks/use-dialect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { DialectToggle } from "@/components/dialect-toggle";
 
@@ -100,9 +100,7 @@ function AuthPage() {
       {/* Left visual */}
       <div className="hidden md:flex flex-col justify-between p-10 gradient-brand text-primary-foreground relative overflow-hidden">
         <Link to="/" className="flex items-center gap-2 relative z-10">
-          <div className="h-9 w-9 rounded-xl squircle bg-gold grid place-items-center">
-            <Sparkles className="h-5 w-5 text-gold-foreground" />
-          </div>
+          <img src="/logo.png" alt={t("app_name")} className="h-9 w-9 rounded-xl squircle object-cover" />
           <span className="font-display text-xl font-semibold">{t("app_name")}</span>
         </Link>
         <div className="relative z-10">
