@@ -78,39 +78,48 @@ export type Database = {
           created_at: string
           dialogue_json: Json
           grammar_md_badini: string | null
+          grammar_md_en: string | null
           grammar_md_sorani: string | null
           id: string
           level_id: string
           order_index: number
           summary_badini: string | null
+          summary_en: string | null
           summary_sorani: string | null
           title_badini: string
+          title_en: string | null
           title_sorani: string
         }
         Insert: {
           created_at?: string
           dialogue_json?: Json
           grammar_md_badini?: string | null
+          grammar_md_en?: string | null
           grammar_md_sorani?: string | null
           id?: string
           level_id: string
           order_index: number
           summary_badini?: string | null
+          summary_en?: string | null
           summary_sorani?: string | null
           title_badini: string
+          title_en?: string | null
           title_sorani: string
         }
         Update: {
           created_at?: string
           dialogue_json?: Json
           grammar_md_badini?: string | null
+          grammar_md_en?: string | null
           grammar_md_sorani?: string | null
           id?: string
           level_id?: string
           order_index?: number
           summary_badini?: string | null
+          summary_en?: string | null
           summary_sorani?: string | null
           title_badini?: string
+          title_en?: string | null
           title_sorani?: string
         }
         Relationships: [
