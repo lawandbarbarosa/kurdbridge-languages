@@ -282,7 +282,7 @@ function VideoView() {
     <AppShell activeLang={v.language_code}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         
-        {/* Header Action Context Layout (Title/Description Top Left relative to Video Workspace) */}
+        {/* Header Action Context Layout */}
         <div className="flex items-start justify-between gap-4 flex-wrap pb-2">
           <div className="min-w-0 flex-1">
             <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground break-words" dir="ltr">
@@ -298,7 +298,7 @@ function VideoView() {
 
         {/* Safe, self-contained player frame canvas */}
         <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl max-h-[85vh] flex flex-col justify-between group">
-          <div className="w-full h-full flex items-center justify-center grow bg-neutral-950">
+          <div className="w-full h-full flex items-center justify-center grow bg-neutral-950 pb-12">
             {videoPath ? (
               signedUrl ? (
                 <video
@@ -320,15 +320,28 @@ function VideoView() {
             )}
           </div>
 
-          {/* Action Overlay Controls Panel */}
+          {/* Combined Actions & Timeline Controls Footer - Unconditionally Visible & Positioned Ultra-Low */}
           {videoPath && signedUrl && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-4 pt-12 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/70 to-transparent p-3 pt-6 z-20 flex items-center gap-4 text-white">
               
-              {/* Perfectly Uniform Continuous Track Layout */}
+              {/* Controls Stack Left Alignment */}
+              <div className="flex items-center gap-3 shrink-0">
+                <button onClick={togglePlay} className="hover:text-red-500 transition p-1">
+                  {isPlaying ? <Pause className="h-4 w-4 fill-white" /> : <Play className="h-4 w-4 fill-white" />}
+                </button>
+                <button onClick={toggleMute} className="hover:text-red-500 transition p-1">
+                  {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+                <span className="text-xs text-neutral-300 font-mono tracking-tighter select-none min-w-[70px]">
+                  {formatTime(currentTime)} / {formatTime(duration)}
+                </span>
+              </div>
+
+              {/* Perfectly Uniform Inline Track Layout */}
               <div 
                 ref={timelineRef}
                 onClick={handleTimelineClick}
-                className="relative w-full h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer rounded-full mb-3 overflow-visible group/timeline"
+                className="relative flex-1 h-1.5 bg-white/20 hover:h-2.5 transition-all cursor-pointer rounded-full overflow-visible group/timeline"
               >
                 {/* Clean, Full-Span Red Playback Progress Indicator */}
                 <div 
@@ -363,21 +376,6 @@ function VideoView() {
                     </div>
                   );
                 })}
-              </div>
-
-              {/* Deck Lower Controls Action Center */}
-              <div className="flex items-center justify-between text-white text-sm px-0.5">
-                <div className="flex items-center gap-4">
-                  <button onClick={togglePlay} className="hover:text-red-500 transition p-0.5">
-                    {isPlaying ? <Pause className="h-4 w-4 fill-white" /> : <Play className="h-4 w-4 fill-white" />}
-                  </button>
-                  <button onClick={toggleMute} className="hover:text-red-500 transition p-0.5">
-                    {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                  </button>
-                  <span className="text-xs text-neutral-300 font-mono tracking-tighter selection:bg-transparent">
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </span>
-                </div>
               </div>
 
             </div>
