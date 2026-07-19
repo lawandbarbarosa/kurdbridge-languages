@@ -88,6 +88,10 @@ export const badini: typeof sorani = {
   transcript: "دەق",
   tap_word_hint: "کلیک لسەر پەیڤێن ڕۆشنکری بکە بۆ دیتنا واتایێ وان",
 
+  books: "کتێب",
+  book_practice: "ڕاهێنانا خوێندنێ",
+  no_books: "هێشتا چ کتێب نینن",
+
   highlighted_words: "پەیڤێت ڕۆشنکری",
   highlight_hint: "کلیک لسەر پەیڤەکێ بکە بۆ زێدەکرنا واتایێ. Shift+کلیک لسەر پەیڤەکا دی بکە بۆ هەلبژارتنا ڕستەیەکا کورت.",
   no_highlights: "هێشتا چ پەیڤێن ڕۆشنکری نینن",
@@ -139,6 +143,7 @@ export const badini: typeof sorani = {
   admin_lessons: "وانە",
   admin_vocab: "پەیڤ",
   admin_videos: "ڤیدیۆ",
+  admin_books: "کتێب",
   admin_users: "بکارهێنەر",
   add_new: "زێدەکرنا نوی",
   edit: "دەستکاری",
