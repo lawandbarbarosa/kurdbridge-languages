@@ -7,7 +7,7 @@ import { useDialect } from "@/hooks/use-dialect";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Flame, Trophy, BookOpen, PlayCircle, Target, Sparkles, ArrowLeft } from "lucide-react";
+import { Loader2, Flame, Trophy, BookOpen, PlayCircle, Library, Target, Sparkles, ArrowLeft } from "lucide-react";
 
 // Languages with real authored lesson/vocab/video content. Everything else in
 // the `languages` table still shows up in the switcher, just muted and
@@ -185,7 +185,7 @@ function Dashboard() {
         </div>
 
         {/* Vocab quick access */}
-        <Link to={`/vocab/${data.activeLang}`} className="lg:col-span-3 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
+        <Link to={`/vocab/${data.activeLang}`} className="lg:col-span-2 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("vocabulary")}</div>
             <div className="mt-1 font-display text-xl font-semibold">{t("flashcards")}</div>
@@ -194,12 +194,21 @@ function Dashboard() {
         </Link>
 
         {/* Videos quick access */}
-        <Link to={`/videos/${data.activeLang}`} className="lg:col-span-3 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
+        <Link to={`/videos/${data.activeLang}`} className="lg:col-span-2 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("videos")}</div>
             <div className="mt-1 font-display text-xl font-semibold">{t("video_practice")}</div>
           </div>
           <PlayCircle className="h-8 w-8 text-primary-ink" />
+        </Link>
+
+        {/* Books quick access */}
+        <Link to={`/books/${data.activeLang}`} className="lg:col-span-2 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
+          <div>
+            <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("books")}</div>
+            <div className="mt-1 font-display text-xl font-semibold">{t("book_practice")}</div>
+          </div>
+          <Library className="h-8 w-8 text-primary-ink" />
         </Link>
       </div>
     </AppShell>
