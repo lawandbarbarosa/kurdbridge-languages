@@ -291,12 +291,15 @@ function VideoView() {
           </div>
         </div>
 
-        {/* Responsive Grid System: Changes to side-by-side on tablet viewport ranges (md:) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+        {/* Responsive Grid System: stacked through phone + tablet (portrait and
+            landscape), side-by-side only at desktop widths (lg:, 1024px+) where
+            there's enough room for both a usable video and a readable transcript
+            column at once. */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           
           {/* Safe, self-contained player frame column canvas */}
-          <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl flex flex-col justify-between group h-fit md:sticky md:top-6">
-            <div className="w-full flex items-center justify-center grow bg-neutral-950 pb-12 aspect-video md:pb-14">
+          <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl flex flex-col justify-between group h-fit lg:sticky lg:top-6">
+            <div className="w-full flex items-center justify-center grow bg-neutral-950 pb-12 aspect-video lg:pb-14">
               {videoPath ? (
                 signedUrl ? (
                   <video
@@ -381,7 +384,7 @@ function VideoView() {
             {/* Height rules modified dynamically to match layouts smoothly on larger viewport splits */}
             <div
               ref={viewportRef}
-              className="relative h-[400px] md:h-[calc(100vh-14rem)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300 border-t md:border-t-0 pt-8 pb-12"
+              className="relative h-[400px] lg:h-[calc(100vh-14rem)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300 border-t lg:border-t-0 pt-8 pb-12"
               style={{
                 WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
                 maskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
