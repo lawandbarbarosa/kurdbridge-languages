@@ -88,6 +88,10 @@ export const english: typeof sorani = {
   transcript: "Transcript",
   tap_word_hint: "Tap a highlighted word to see its meaning",
 
+  books: "Books",
+  book_practice: "Reading practice",
+  no_books: "No books yet",
+
   highlighted_words: "Highlighted words",
   highlight_hint: "Click a word to add its meaning. Shift-click another word to select a phrase.",
   no_highlights: "No highlighted words yet",
@@ -139,6 +143,7 @@ export const english: typeof sorani = {
   admin_lessons: "Lessons",
   admin_vocab: "Vocabulary",
   admin_videos: "Videos",
+  admin_books: "Books",
   admin_users: "Users",
   add_new: "Add new",
   edit: "Edit",
