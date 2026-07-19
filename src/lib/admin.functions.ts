@@ -68,6 +68,19 @@ export const adminListVideos = createServerFn({ method: "POST" })
     return { videos: videos ?? [] };
   });
 
+export const adminListBooks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ language: langEnum }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: books } = await context.supabase
+      .from("books")
+      .select("*")
+      .eq("language_code", data.language)
+      .order("level_cefr");
+    return { books: books ?? [] };
+  });
+
 export const adminListUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -232,6 +245,44 @@ export const adminUpsertVideo = createServerFn({ method: "POST" })
     return { video: saved };
   });
 
+const bookParagraphSchema = z.object({
+  text: z.string(),
+  ku_sorani: z.string().optional(),
+  ku_badini: z.string().optional(),
+  highlights: z.array(z.object({
+    id: z.string().max(100),
+    start_index: z.number().int().min(0),
+    end_index: z.number().int().min(0),
+    word: z.string().min(1).max(200),
+    part_of_speech: z.string().max(50).default("other"),
+    meaning_en: z.string().max(500).default(""),
+    meaning_ku_sorani: z.string().max(500).default(""),
+    meaning_ku_badini: z.string().max(500).default(""),
+  })).optional().default([]),
+});
+
+export const adminUpsertBook = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      language_code: langEnum,
+      level_cefr: cefrEnum,
+      title: z.string().min(1).max(300),
+      author: z.string().max(200).optional().nullable(),
+      description: z.string().max(2000).optional(),
+      cover_path: z.string().max(500).optional().nullable(),
+      content_json: z.array(bookParagraphSchema).default([]),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const payload = { ...data, author: data.author || null, cover_path: data.cover_path || null };
+    const { data: saved, error } = await context.supabase.from("books").upsert(payload).select().single();
+    if (error) throw new Error(error.message);
+    return { book: saved };
+  });
+
 /* -------------------- TRANSCRIBE UPLOADED VIDEO -------------------- */
 export const transcribeVideoFile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -349,6 +400,16 @@ export const adminDeleteVideo = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { error } = await context.supabase.from("videos").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteBook = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("books").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
