@@ -344,3 +344,23 @@ export const getVideo = createServerFn({ method: "POST" })
     if (!video) throw new Error("Video not found");
     return { video };
   });
+
+/* -------------------- BOOKS -------------------- */
+export const getBooks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ language: langEnum }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: books } = await supabase.from("books").select("id, title, author, cover_path, description, level_cefr").eq("language_code", data.language).order("level_cefr");
+    return { books: books ?? [] };
+  });
+
+export const getBook = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase } = context;
+    const { data: book } = await supabase.from("books").select("*").eq("id", data.id).maybeSingle();
+    if (!book) throw new Error("Book not found");
+    return { book };
+  });
