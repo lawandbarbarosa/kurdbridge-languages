@@ -1,1 +1,11 @@
 project_id = "uranvemazifteoqfnvrh"
+
+# Session policy: keep people signed in as long as they use the app at
+# least once every 10 days. Supabase sessions never expire by default, so
+# this is what actually enforces "ask for sign-in again after 10 days of
+# inactivity" rather than leaving it unbounded.
+[auth.sessions]
+# No timebox is set on purpose — this is an inactivity limit (10 days since
+# the session was last refreshed/used), not a hard cutoff from the original
+# sign-in date. A daily user should never be forced to re-authenticate.
+inactivity_timeout = "240h"
