@@ -93,6 +93,10 @@ const s = {
   transcript: "دەق",
   tap_word_hint: "کلیک لەسەر وشە ڕۆشنکراوەکان بکە بۆ بینینی واتاکەی",
 
+  books: "کتێبەکان",
+  book_practice: "ڕاهێنانی خوێندنەوە",
+  no_books: "هێشتا هیچ کتێبێک نییە",
+
   // Word highlighting (admin transcript editor + viewer popover)
   highlighted_words: "وشە ڕۆشنکراوەکان",
   highlight_hint: "کلیک لەسەر وشەیەک بکە بۆ زیادکردنی واتاکەی. Shift+کلیک لەسەر وشەیەکی دیکە بکە بۆ هەڵبژاردنی دەستەواژەیەک.",
@@ -149,6 +153,7 @@ const s = {
   admin_lessons: "وانەکان",
   admin_vocab: "وشەکان",
   admin_videos: "ڤیدیۆکان",
+  admin_books: "کتێبەکان",
   admin_users: "بەکارهێنەران",
   add_new: "زیادکردنی نوێ",
   edit: "دەستکاری",
