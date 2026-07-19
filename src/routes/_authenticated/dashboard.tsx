@@ -104,9 +104,9 @@ function Dashboard() {
       </div>
 
       {/* Bento grid */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4 auto-rows-[minmax(120px,auto)]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 auto-rows-[minmax(120px,auto)]">
         {/* Big continue card */}
-        <div className="md:col-span-4 md:row-span-2 bento-card p-5 sm:p-8 relative overflow-hidden">
+        <div className="sm:col-span-2 lg:col-span-4 lg:row-span-2 bento-card p-5 sm:p-8 relative overflow-hidden">
           <div className="absolute -bottom-16 -left-16 h-64 w-64 rounded-full bg-primary/8 blur-3xl" />
           <div className="relative">
             <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider">
@@ -148,14 +148,14 @@ function Dashboard() {
         </div>
 
         {/* Streak */}
-        <div className="md:col-span-2 bento-card p-6 gradient-sun">
+        <div className="lg:col-span-2 bento-card p-6 gradient-sun">
           <Flame className="h-6 w-6" />
           <div className="mt-3 text-4xl font-display font-bold">{data.profile?.streak_count ?? 0}</div>
           <div className="text-sm mt-1 opacity-80">{t("streak")} • {t("days")}</div>
         </div>
 
         {/* Level badge */}
-        <div className="md:col-span-2 bento-card p-6">
+        <div className="lg:col-span-2 bento-card p-6">
           <Trophy className="h-6 w-6 text-gold-ink" />
           <div className="mt-3 text-4xl font-display font-bold text-primary-ink">
             {data.level?.current_cefr ?? "A1"}
@@ -164,19 +164,19 @@ function Dashboard() {
         </div>
 
         {/* Words learned */}
-        <div className="md:col-span-2 bento-card p-6">
+        <div className="lg:col-span-2 bento-card p-6">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("words_learned")}</div>
           <div className="mt-2 text-3xl font-display font-bold">{data.wordsLearnedCount}</div>
         </div>
 
         {/* Lessons completed */}
-        <div className="md:col-span-2 bento-card p-6">
+        <div className="lg:col-span-2 bento-card p-6">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("lessons_completed")}</div>
           <div className="mt-2 text-3xl font-display font-bold">{data.completedCount}</div>
         </div>
 
         {/* Due for review */}
-        <div className="md:col-span-2 bento-card p-6">
+        <div className="lg:col-span-2 bento-card p-6">
           <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("due_for_review")}</div>
           <div className="mt-2 flex items-baseline gap-2">
             <div className="text-3xl font-display font-bold">{data.dueCount}</div>
@@ -185,7 +185,7 @@ function Dashboard() {
         </div>
 
         {/* Vocab quick access */}
-        <Link to={`/vocab/${data.activeLang}`} className="md:col-span-3 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
+        <Link to={`/vocab/${data.activeLang}`} className="lg:col-span-3 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("vocabulary")}</div>
             <div className="mt-1 font-display text-xl font-semibold">{t("flashcards")}</div>
@@ -194,7 +194,7 @@ function Dashboard() {
         </Link>
 
         {/* Videos quick access */}
-        <Link to={`/videos/${data.activeLang}`} className="md:col-span-3 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
+        <Link to={`/videos/${data.activeLang}`} className="lg:col-span-3 bento-card p-6 flex items-start justify-between hover:bg-accent/40 transition-colors">
           <div>
             <div className="text-xs uppercase tracking-wider text-muted-foreground">{t("videos")}</div>
             <div className="mt-1 font-display text-xl font-semibold">{t("video_practice")}</div>
