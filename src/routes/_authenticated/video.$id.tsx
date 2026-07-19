@@ -278,8 +278,8 @@ function VideoView() {
 
   return (
     <AppShell activeLang={v.language_code}>
-      {/* Container expanded max-width slightly for balanced side-by-side splits */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      {/* Container for the stacked video + transcript layout */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         
         {/* Header Title Context Layout */}
         <div className="flex items-start justify-between gap-4 flex-wrap pb-2">
@@ -291,15 +291,12 @@ function VideoView() {
           </div>
         </div>
 
-        {/* Responsive Grid System: stacked through phone + tablet (portrait and
-            landscape), side-by-side only at desktop widths (lg:, 1024px+) where
-            there's enough room for both a usable video and a readable transcript
-            column at once. */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Video always on top, transcript always below, at every screen size */}
+        <div className="grid grid-cols-1 gap-6 items-start">
           
           {/* Safe, self-contained player frame column canvas */}
-          <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl flex flex-col justify-between group h-fit lg:sticky lg:top-6">
-            <div className="w-full flex items-center justify-center grow bg-neutral-950 pb-12 aspect-video lg:pb-14">
+          <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-xl flex flex-col justify-between group">
+            <div className="w-full flex items-center justify-center grow bg-neutral-950 pb-12 aspect-video">
               {videoPath ? (
                 signedUrl ? (
                   <video
@@ -381,10 +378,9 @@ function VideoView() {
 
           {/* Transcript Body Section Column */}
           <div className="w-full">
-            {/* Height rules modified dynamically to match layouts smoothly on larger viewport splits */}
             <div
               ref={viewportRef}
-              className="relative h-[400px] lg:h-[calc(100vh-14rem)] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300 border-t lg:border-t-0 pt-8 pb-12"
+              className="relative h-[420px] sm:h-[480px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in fade-in duration-300 border-t pt-8 pb-12"
               style={{
                 WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
                 maskImage: "linear-gradient(to bottom, transparent 0%, black 8%, black 85%, transparent 100%)",
