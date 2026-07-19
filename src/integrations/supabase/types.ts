@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      books: {
+        Row: {
+          author: string | null
+          content_json: Json
+          cover_path: string | null
+          created_at: string
+          description: string | null
+          id: string
+          language_code: Database["public"]["Enums"]["target_lang"]
+          level_cefr: Database["public"]["Enums"]["cefr_level"]
+          title: string
+        }
+        Insert: {
+          author?: string | null
+          content_json?: Json
+          cover_path?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          language_code: Database["public"]["Enums"]["target_lang"]
+          level_cefr: Database["public"]["Enums"]["cefr_level"]
+          title: string
+        }
+        Update: {
+          author?: string | null
+          content_json?: Json
+          cover_path?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          language_code?: Database["public"]["Enums"]["target_lang"]
+          level_cefr?: Database["public"]["Enums"]["cefr_level"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "books_language_code_fkey"
+            columns: ["language_code"]
+            isOneToOne: false
+            referencedRelation: "languages"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       languages: {
         Row: {
           code: Database["public"]["Enums"]["target_lang"]
