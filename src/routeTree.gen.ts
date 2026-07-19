@@ -23,6 +23,8 @@ import { Route as AuthenticatedVideoIdRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPlacementLangRouteImport } from './routes/_authenticated/placement.$lang'
 import { Route as AuthenticatedLessonIdRouteImport } from './routes/_authenticated/lesson.$id'
 import { Route as AuthenticatedLearnLangRouteImport } from './routes/_authenticated/learn.$lang'
+import { Route as AuthenticatedBooksLangRouteImport } from './routes/_authenticated/books.$lang'
+import { Route as AuthenticatedBookIdRouteImport } from './routes/_authenticated/book.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -94,6 +96,16 @@ const AuthenticatedLearnLangRoute = AuthenticatedLearnLangRouteImport.update({
   path: '/learn/$lang',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBooksLangRoute = AuthenticatedBooksLangRouteImport.update({
+  id: '/books/$lang',
+  path: '/books/$lang',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBookIdRoute = AuthenticatedBookIdRouteImport.update({
+  id: '/book/$id',
+  path: '/book/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +115,8 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/speak': typeof AuthenticatedSpeakRoute
+  '/book/$id': typeof AuthenticatedBookIdRoute
+  '/books/$lang': typeof AuthenticatedBooksLangRoute
   '/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -118,6 +132,8 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/speak': typeof AuthenticatedSpeakRoute
+  '/book/$id': typeof AuthenticatedBookIdRoute
+  '/books/$lang': typeof AuthenticatedBooksLangRoute
   '/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -135,6 +151,8 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/speak': typeof AuthenticatedSpeakRoute
+  '/_authenticated/book/$id': typeof AuthenticatedBookIdRoute
+  '/_authenticated/books/$lang': typeof AuthenticatedBooksLangRoute
   '/_authenticated/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/_authenticated/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/_authenticated/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -152,6 +170,8 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/speak'
+    | '/book/$id'
+    | '/books/$lang'
     | '/learn/$lang'
     | '/lesson/$id'
     | '/placement/$lang'
@@ -167,6 +187,8 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/settings'
     | '/speak'
+    | '/book/$id'
+    | '/books/$lang'
     | '/learn/$lang'
     | '/lesson/$id'
     | '/placement/$lang'
@@ -183,6 +205,8 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/settings'
     | '/_authenticated/speak'
+    | '/_authenticated/book/$id'
+    | '/_authenticated/books/$lang'
     | '/_authenticated/learn/$lang'
     | '/_authenticated/lesson/$id'
     | '/_authenticated/placement/$lang'
@@ -297,6 +321,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLearnLangRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/books/$lang': {
+      id: '/_authenticated/books/$lang'
+      path: '/books/$lang'
+      fullPath: '/books/$lang'
+      preLoaderRoute: typeof AuthenticatedBooksLangRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/book/$id': {
+      id: '/_authenticated/book/$id'
+      path: '/book/$id'
+      fullPath: '/book/$id'
+      preLoaderRoute: typeof AuthenticatedBookIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -306,6 +344,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSpeakRoute: typeof AuthenticatedSpeakRoute
+  AuthenticatedBookIdRoute: typeof AuthenticatedBookIdRoute
+  AuthenticatedBooksLangRoute: typeof AuthenticatedBooksLangRoute
   AuthenticatedLearnLangRoute: typeof AuthenticatedLearnLangRoute
   AuthenticatedLessonIdRoute: typeof AuthenticatedLessonIdRoute
   AuthenticatedPlacementLangRoute: typeof AuthenticatedPlacementLangRoute
@@ -320,6 +360,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSpeakRoute: AuthenticatedSpeakRoute,
+  AuthenticatedBookIdRoute: AuthenticatedBookIdRoute,
+  AuthenticatedBooksLangRoute: AuthenticatedBooksLangRoute,
   AuthenticatedLearnLangRoute: AuthenticatedLearnLangRoute,
   AuthenticatedLessonIdRoute: AuthenticatedLessonIdRoute,
   AuthenticatedPlacementLangRoute: AuthenticatedPlacementLangRoute,
