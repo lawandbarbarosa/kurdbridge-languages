@@ -63,7 +63,7 @@ export function AppShell({ children, activeLang }: Props) {
             <img src="/logo.png" alt={t("app_name")} className="h-9 w-9 rounded-xl squircle object-cover shadow-soft" />
             <span className="font-display text-lg font-semibold">{t("app_name")}</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1">
             {nav.map((n) => (
               <a
                 key={n.to}
@@ -75,7 +75,7 @@ export function AppShell({ children, activeLang }: Props) {
               </a>
             ))}
           </nav>
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <DialectToggle />
             <Button asChild variant="ghost" size="icon" title={t("settings")}>
               <Link to="/settings"><Settings className="h-4 w-4" /></Link>
@@ -85,13 +85,15 @@ export function AppShell({ children, activeLang }: Props) {
             </Button>
           </div>
 
-          {/* Mobile: everything above collapses into a hamburger menu so the
+          {/* Mobile & tablet: everything above collapses into a hamburger menu so the
               header row never has to fit nav links + dialect toggle + icons
-              in one line on a narrow screen. */}
+              in one line on a narrow-to-medium screen. Full nav only shows at
+              lg: (1024px+) since tablet widths (768-1023px) don't have room
+              for 6 links + toggle + 2 icons in a max-w-7xl header. */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="lg:hidden"
             title={t("menu")}
             aria-label={t("menu")}
             onClick={() => setMobileOpen(true)}
@@ -139,7 +141,7 @@ export function AppShell({ children, activeLang }: Props) {
           </Sheet>
         </div>
         {email && (
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 pb-2 text-xs text-muted-foreground truncate hidden md:block">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 pb-2 text-xs text-muted-foreground truncate hidden lg:block">
             {email}
           </div>
         )}
