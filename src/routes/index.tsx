@@ -80,7 +80,7 @@ function Landing() {
 
       {/* Features */}
       <section className="mx-auto max-w-6xl px-4 sm:px-6 py-14 sm:py-20">
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <Feature icon={<Target className="h-6 w-6" />} title={t("feature_placement_title")} desc={t("feature_placement_desc")} />
           <Feature icon={<BookOpen className="h-6 w-6" />} title={t("feature_tree_title")} desc={t("feature_tree_desc")} />
           <Feature icon={<PlayCircle className="h-6 w-6" />} title={t("feature_video_title")} desc={t("feature_video_desc")} />
