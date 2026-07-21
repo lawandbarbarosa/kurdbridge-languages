@@ -63,6 +63,9 @@ export const english: typeof sorani = {
   no_due: "Nothing due for review",
 
   lesson_tree: "Lesson tree",
+  courses: "Courses",
+  no_courses: "No courses yet",
+  back_to_course: "Back to course",
   level: "Level",
   lesson: "Lesson",
   grammar: "Grammar",
