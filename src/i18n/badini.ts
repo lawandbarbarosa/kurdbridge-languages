@@ -63,6 +63,9 @@ export const badini: typeof sorani = {
   no_due: "چ تشتەک نینە بۆ پێداچوونێ",
 
   lesson_tree: "دارا وانا",
+  courses: "کۆرسێن",
+  no_courses: "هێشتا چ کۆرس نینن",
+  back_to_course: "زڤڕین بۆ کۆرس",
   level: "ئاست",
   lesson: "وانە",
   grammar: "ڕێزمان",
