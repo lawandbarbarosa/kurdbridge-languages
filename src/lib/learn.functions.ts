@@ -141,15 +141,16 @@ export const submitPlacement = createServerFn({ method: "POST" })
   });
 
 /* -------------------- LESSON TREE -------------------- */
-export const getLessonTree = createServerFn({ method: "POST" })
+/* -------------------- COURSES -------------------- */
+export const getCourses = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ language: langEnum }).parse(d))
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
-    const [{ data: levels }, { data: userLevel }] = await Promise.all([
+    const [{ data: levels }, { data: userLevel }, { data: progress }] = await Promise.all([
       supabase
         .from("levels")
-        .select("id, cefr, order_index, lessons(id, order_index, title_sorani, title_badini, title_en, summary_sorani, summary_badini, summary_en)")
+        .select("id, cefr, order_index, courses(id, order_index, title_sorani, title_badini, title_en, description_sorani, description_badini, description_en, lessons(id))")
         .eq("language_code", data.language)
         .order("order_index"),
       supabase
@@ -158,40 +159,75 @@ export const getLessonTree = createServerFn({ method: "POST" })
         .eq("user_id", userId)
         .eq("language_code", data.language)
         .maybeSingle(),
+      supabase.from("user_lesson_progress").select("lesson_id, passed"),
     ]);
+    const passedIds = new Set((progress ?? []).filter((p) => p.passed).map((p) => p.lesson_id));
+    const currentCefr = userLevel?.current_cefr ?? "A1";
+    const cefrOrder = ["A1", "A2", "B1", "B2", "C1", "C2"];
+    const currentIdx = cefrOrder.indexOf(currentCefr);
+    const levelGroups = (levels ?? []).map((lvl) => {
+      const cefrIdx = cefrOrder.indexOf(lvl.cefr as string);
+      const levelUnlocked = cefrIdx <= currentIdx;
+      const courses = [...(lvl.courses ?? [])]
+        .sort((a, b) => a.order_index - b.order_index)
+        .map((c) => {
+          const lessonIds = (c.lessons ?? []).map((l: { id: string }) => l.id);
+          return {
+            id: c.id,
+            title_sorani: c.title_sorani,
+            title_badini: c.title_badini,
+            title_en: c.title_en,
+            description_sorani: c.description_sorani,
+            description_badini: c.description_badini,
+            description_en: c.description_en,
+            totalLessons: lessonIds.length,
+            completedLessons: lessonIds.filter((id: string) => passedIds.has(id)).length,
+          };
+        });
+      return { id: lvl.id, cefr: lvl.cefr, unlocked: levelUnlocked, courses };
+    });
+    return { levels: levelGroups, currentCefr };
+  });
+
+export const getCourse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ courseId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    const { supabase, userId } = context;
+    const { data: course } = await supabase
+      .from("courses")
+      .select("id, title_sorani, title_badini, title_en, description_sorani, description_badini, description_en, level_id, levels(cefr, language_code), lessons(id, order_index, title_sorani, title_badini, title_en, summary_sorani, summary_badini, summary_en)")
+      .eq("id", data.courseId)
+      .maybeSingle();
+    if (!course) throw new Error("Course not found");
     const { data: progress } = await supabase
       .from("user_lesson_progress")
-      .select("lesson_id, passed, score");
+      .select("lesson_id, passed, score")
+      .eq("user_id", userId);
     const passedIds = new Set((progress ?? []).filter((p) => p.passed).map((p) => p.lesson_id));
     const scoreMap = new Map((progress ?? []).map((p) => [p.lesson_id, p.score]));
-    const currentCefr = userLevel?.current_cefr ?? "A1";
-    const currentIdx = ["A1", "A2", "B1", "B2", "C1", "C2"].indexOf(currentCefr);
-    const tree = (levels ?? []).map((lvl) => {
-      const cefrIdx = ["A1", "A2", "B1", "B2", "C1", "C2"].indexOf(lvl.cefr as string);
-      const levelUnlocked = cefrIdx <= currentIdx;
-      const lessons = [...(lvl.lessons ?? [])].sort((a, b) => a.order_index - b.order_index);
-      let prevPassed = true;
-      const nodes = lessons.map((l) => {
-        const passed = passedIds.has(l.id);
-        const unlocked = levelUnlocked && prevPassed;
-        prevPassed = passed;
-        return {
-          id: l.id,
-          title_sorani: l.title_sorani,
-          title_badini: l.title_badini,
-          title_en: l.title_en,
-          summary_sorani: l.summary_sorani,
-          summary_badini: l.summary_badini,
-          summary_en: l.summary_en,
-          order_index: l.order_index,
-          passed,
-          unlocked,
-          score: scoreMap.get(l.id) ?? 0,
-        };
-      });
-      return { id: lvl.id, cefr: lvl.cefr, unlocked: levelUnlocked, lessons: nodes };
+    const lessons = [...(course.lessons ?? [])].sort((a, b) => a.order_index - b.order_index);
+    let prevPassed = true;
+    const nodes = lessons.map((l) => {
+      const passed = passedIds.has(l.id);
+      const unlocked = prevPassed;
+      prevPassed = passed;
+      return {
+        id: l.id,
+        title_sorani: l.title_sorani,
+        title_badini: l.title_badini,
+        title_en: l.title_en,
+        summary_sorani: l.summary_sorani,
+        summary_badini: l.summary_badini,
+        summary_en: l.summary_en,
+        order_index: l.order_index,
+        passed,
+        unlocked,
+        score: scoreMap.get(l.id) ?? 0,
+      };
     });
-    return { tree, currentCefr };
+    const { lessons: _omit, ...courseInfo } = course;
+    return { course: courseInfo, lessons: nodes };
   });
 
 /* -------------------- LESSON RUNNER -------------------- */
@@ -203,7 +239,7 @@ export const getLesson = createServerFn({ method: "POST" })
     const [{ data: lesson }, { data: exercises }] = await Promise.all([
       supabase
         .from("lessons")
-        .select("id, title_sorani, title_badini, title_en, grammar_md_sorani, grammar_md_badini, grammar_md_en, dialogue_json, level_id, levels(cefr, language_code)")
+        .select("id, title_sorani, title_badini, title_en, grammar_md_sorani, grammar_md_badini, grammar_md_en, dialogue_json, level_id, course_id, levels(cefr, language_code)")
         .eq("id", data.lessonId)
         .maybeSingle(),
       supabase.from("lesson_exercises").select("*").eq("lesson_id", data.lessonId).order("order_index"),
