@@ -171,4 +171,187 @@ export const english: typeof sorani = {
   speak_agent_id_help: "Create an agent in the ElevenLabs dashboard → Agents and paste its ID here",
   speak_transcript: "Transcript",
   mic_denied: "Microphone access is required",
+
+  // ---- Public marketing nav & footer ----
+  nav_home: "Home",
+  nav_about: "About",
+  nav_pricing: "Pricing",
+  nav_contact: "Contact",
+  footer_blurb:
+    "A complete language-learning platform built from the ground up for Kurdish speakers — every lesson, every instruction, in your own language.",
+  footer_product_heading: "Product",
+  footer_company_heading: "Company",
+  footer_made_for: "Built for Kurdish speakers, everywhere.",
+
+  // ---- Home: hero extras ----
+  hero_secondary_cta: "See pricing",
+
+  // ---- Home: stats bar ----
+  stat_languages_value: "4",
+  stat_languages_label: "languages to learn",
+  stat_levels_value: "A1–C2",
+  stat_levels_label: "full level range",
+  stat_dialects_value: "3",
+  stat_dialects_label: "interface languages",
+  stat_price_value: "Free",
+  stat_price_label: "to get started",
+
+  // ---- Home: languages section ----
+  languages_title: "Choose the language that opens your next door",
+  languages_sub:
+    "Four languages, four different reasons to learn — each one explained from a Kurdish starting point.",
+  lang_english: "English",
+  lang_english_desc: "The world's most useful second language, for work, study, and travel.",
+  lang_german: "German",
+  lang_german_desc: "A path toward study and work opportunities across Germany and Europe.",
+  lang_arabic: "Arabic",
+  lang_arabic_desc: "Connect with the wider Arabic-speaking world, one grammar rule at a time.",
+  lang_korean: "Korean",
+  lang_korean_desc: "For everyone who fell in love with the culture before the language.",
+
+  // ---- Home: features (expanded) ----
+  feature_vocab_title: "Vocabulary that sticks",
+  feature_vocab_desc:
+    "Flashcards bring back the words you're about to forget, right when you need them.",
+  feature_speak_title: "Speaking practice",
+  feature_speak_desc: "Have a real conversation with an AI partner, and get corrected in Kurdish.",
+  feature_books_title: "Reading practice",
+  feature_books_desc: "Read real stories with tap-to-translate words, at your own pace.",
+  feature_dialect_title: "Sorani, Badini, or English",
+  feature_dialect_desc:
+    "Use Batlis in the Kurdish dialect you're most comfortable with, and switch anytime.",
+  feature_a11y_title: "Built to be accessible",
+  feature_a11y_desc:
+    "A dyslexia-friendly typeface is one tap away, for anyone who reads more easily with it.",
+
+  // ---- Home: how it works ----
+  how_title: "How Batlis works",
+  how_sub: "Four steps between you and your next language.",
+  how_step1_title: "Find your level",
+  how_step1_desc: "Take a short placement test, or start from A1 if you're brand new.",
+  how_step2_title: "Follow your lesson tree",
+  how_step2_desc: "Grammar, dialogue, and exercises, laid out in a clear path from A1 to C2.",
+  how_step3_title: "Practice for real",
+  how_step3_desc: "Watch videos, read books, and speak with an AI partner — not just quizzes.",
+  how_step4_title: "Keep your streak",
+  how_step4_desc: "Review what you're about to forget, and track your progress every day.",
+
+  // ---- Home: why Batlis ----
+  why_title: "Why Batlis",
+  why_sub: "Most language apps assume you already read English. We didn't.",
+  why_point1_title: "Taught in your mother tongue",
+  why_point1_desc:
+    "Every grammar rule and every instruction is explained in Kurdish, not translated as an afterthought.",
+  why_point2_title: "Your dialect, your choice",
+  why_point2_desc:
+    "Sorani or Badini — use the Kurdish you grew up with, and switch whenever you like.",
+  why_point3_title: "A real path, not just an app",
+  why_point3_desc: "A structured curriculum from A1 to C2, so you always know what's next.",
+  why_point4_title: "Free to start, today",
+  why_point4_desc:
+    "No credit card, no trial period. Create an account and start your first lesson now.",
+
+  // ---- Home: pricing teaser ----
+  home_pricing_title: "Simple pricing",
+  home_pricing_sub:
+    "Batlis is completely free while we're in early access — every lesson, every feature.",
+  home_pricing_cta: "See pricing",
+
+  // ---- Home: FAQ ----
+  faq_title: "Frequently asked questions",
+  faq_q1: "Is Batlis really free?",
+  faq_a1:
+    "Yes. Every language, every level, and every feature is free while Batlis is in early access.",
+  faq_q2: "Which Kurdish dialects are supported?",
+  faq_a2:
+    "The whole interface is available in Sorani, Badini, and English. Switch anytime from the toggle in the header.",
+  faq_q3: "Do I need to already know English?",
+  faq_a3:
+    "No. Every course is explained from Kurdish, so you can start from zero in any of the four languages.",
+  faq_q4: "What devices does Batlis work on?",
+  faq_a4: "Batlis runs in your browser, on desktop, tablet, or phone — there's no app to install.",
+  faq_q5: "How do I get in touch?",
+  faq_a5: "Send a message from the contact page, or email us directly. We read every message.",
+
+  // ---- Home: final CTA ----
+  final_cta_title: "Start learning, in your own language",
+  final_cta_sub:
+    "Join Batlis today. It's free, and it takes less than a minute to start your first lesson.",
+  final_cta_button: "Create your free account",
+
+  // ---- About page ----
+  about_eyebrow: "About Batlis",
+  about_title: "Language learning, built the right way around",
+  about_sub:
+    "Batlis exists because learning a new language shouldn't require learning a different one just to get started.",
+  about_mission_title: "Our mission",
+  about_mission_body:
+    "We want every Kurdish speaker to be able to learn English, German, Arabic, or Korean without a language barrier standing in the way of the very first lesson. Every explanation, every grammar note, and every piece of feedback is written in Kurdish, from A1 all the way to C2.",
+  about_story_title: "Why we built this",
+  about_story_body:
+    "Most language-learning platforms are built for people who already read English comfortably — the instructions, the grammar notes, even the placement test. For a Kurdish speaker starting from zero, that's a second barrier before the first lesson even begins. Batlis removes it: the guide is in your language, so the only thing left to learn is the language itself.",
+  about_values_title: "What we care about",
+  about_value1_title: "Mother tongue first",
+  about_value1_desc:
+    "Kurdish isn't a translation layered on top — it's the starting point for every lesson.",
+  about_value2_title: "A real curriculum",
+  about_value2_desc: "A structured path from A1 to C2, not a random pile of quizzes.",
+  about_value3_title: "Every dialect welcome",
+  about_value3_desc:
+    "Sorani and Badini speakers both get a native experience, not an afterthought.",
+  about_value4_title: "Open to everyone",
+  about_value4_desc: "Free to use, with nothing standing between you and your first lesson.",
+  about_cta_title: "Have a question, or an idea for Batlis?",
+  about_cta_sub: "We'd genuinely love to hear from you.",
+  about_cta_button: "Contact us",
+
+  // ---- Pricing page ----
+  pricing_eyebrow: "Pricing",
+  pricing_title: "One plan. Everything included.",
+  pricing_sub: "Batlis is free while we're in early access — no trial period, no credit card.",
+  pricing_badge: "Free during early access",
+  plan_name: "Free plan",
+  plan_price: "$0",
+  plan_period: "for now",
+  plan_desc: "Everything Batlis offers, at no cost, for every learner.",
+  plan_feature_1: "Placement test for every language",
+  plan_feature_2: "Full lesson tree, A1 through C2",
+  plan_feature_3: "Vocabulary flashcards with spaced review",
+  plan_feature_4: "Video practice with Kurdish translations",
+  plan_feature_5: "Reading practice with tap-to-translate books",
+  plan_feature_6: "AI speaking practice, corrected in Kurdish",
+  plan_feature_7: "Interface in Sorani, Badini, or English",
+  plan_feature_8: "Dyslexia-friendly typeface option",
+  plan_cta: "Create your free account",
+  pricing_note_title: "Will it stay free?",
+  pricing_note_body:
+    "Batlis is free to use today, while we're in early access. If that ever changes, we'll say so clearly and with plenty of notice.",
+  pricing_faq_title: "Pricing questions",
+  pricing_faq_q1: "Why is Batlis free right now?",
+  pricing_faq_a1:
+    "We're in early access, and we want as many Kurdish speakers as possible learning with us without cost getting in the way.",
+  pricing_faq_q2: "Do I need a credit card to sign up?",
+  pricing_faq_a2: "No. Creating an account only asks for an email and a password.",
+  pricing_faq_q3: "Will there be paid plans later?",
+  pricing_faq_a3:
+    "Possibly, down the road. If we introduce one, current learners will hear about it directly, in advance.",
+  pricing_cta_title: "Ready to start?",
+  pricing_cta_sub: "Your first lesson is free, right now.",
+
+  // ---- Contact page ----
+  contact_eyebrow: "Contact",
+  contact_title: "Let's talk",
+  contact_sub: "Questions, feedback, or an idea for Batlis — send it over. We read every message.",
+  contact_email_label: "Email us directly",
+  contact_response_title: "Response time",
+  contact_response_body: "We usually reply within a few days.",
+  contact_form_title: "Send a message",
+  contact_form_name: "Your name",
+  contact_form_email: "Your email",
+  contact_form_subject: "Subject",
+  contact_form_message: "Message",
+  contact_form_send: "Send message",
+  contact_form_note: "This opens your email app with your message ready to send.",
+  contact_copy_email: "Copy email address",
+  contact_email_copied: "Email address copied",
 };
