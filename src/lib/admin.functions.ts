@@ -23,6 +23,19 @@ export const getIsAdmin = createServerFn({ method: "POST" })
 /* -------------------- ADMIN CONTENT READS -------------------- */
 export const adminListLessons = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ courseId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: lessons } = await context.supabase
+      .from("lessons")
+      .select("*, lesson_exercises(*)")
+      .eq("course_id", data.courseId)
+      .order("order_index");
+    return { lessons: lessons ?? [] };
+  });
+
+export const adminListCourses = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ language: langEnum, cefr: cefrEnum }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
@@ -32,13 +45,13 @@ export const adminListLessons = createServerFn({ method: "POST" })
       .eq("language_code", data.language)
       .eq("cefr", data.cefr)
       .maybeSingle();
-    if (!level) return { levelId: null, lessons: [] };
-    const { data: lessons } = await context.supabase
-      .from("lessons")
-      .select("*, lesson_exercises(*)")
+    if (!level) return { levelId: null, courses: [] };
+    const { data: courses } = await context.supabase
+      .from("courses")
+      .select("*, lessons(id)")
       .eq("level_id", level.id)
       .order("order_index");
-    return { levelId: level.id, lessons: lessons ?? [] };
+    return { levelId: level.id, courses: courses ?? [] };
   });
 
 export const adminListVocab = createServerFn({ method: "POST" })
@@ -102,12 +115,45 @@ export const adminListUsers = createServerFn({ method: "POST" })
   });
 
 /* -------------------- ADMIN WRITES -------------------- */
+export const adminUpsertCourse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      level_id: z.string().uuid(),
+      order_index: z.number().int().min(0),
+      title_sorani: z.string().min(1).max(200),
+      title_badini: z.string().min(1).max(200),
+      title_en: z.string().max(200).optional(),
+      description_sorani: z.string().max(1000).optional(),
+      description_badini: z.string().max(1000).optional(),
+      description_en: z.string().max(1000).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: saved, error } = await context.supabase.from("courses").upsert(data).select().single();
+    if (error) throw new Error(error.message);
+    return { course: saved };
+  });
+
+export const adminDeleteCourse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("courses").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const adminUpsertLesson = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({
       id: z.string().uuid().optional(),
       level_id: z.string().uuid(),
+      course_id: z.string().uuid(),
       order_index: z.number().int().min(0),
       title_sorani: z.string().min(1).max(200),
       title_badini: z.string().min(1).max(200),
