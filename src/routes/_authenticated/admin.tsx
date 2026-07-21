@@ -17,12 +17,15 @@ import { cn } from "@/lib/utils";
 import {
   getIsAdmin,
   adminListLessons,
+  adminListCourses,
   adminListVocab,
   adminListVideos,
   adminListBooks,
   adminListUsers,
   adminUpsertLesson,
   adminDeleteLesson,
+  adminUpsertCourse,
+  adminDeleteCourse,
   adminUpsertVocab,
   adminDeleteVocab,
   adminUpsertVideo,
@@ -88,14 +91,122 @@ function LangCefrPicker({ lang, setLang, cefr, setCefr }: { lang: string; setLan
 }
 
 function LessonsTab() {
-  const { t } = useDialect();
-  const qc = useQueryClient();
   const [lang, setLang] = useState("en");
   const [cefr, setCefr] = useState("A1");
+  const [activeCourse, setActiveCourse] = useState<null | { id: string; title_sorani: string; level_id: string }>(null);
+
+  return (
+    <div>
+      <LangCefrPicker
+        lang={lang}
+        setLang={(v) => { setLang(v); setActiveCourse(null); }}
+        cefr={cefr}
+        setCefr={(v) => { setCefr(v); setActiveCourse(null); }}
+      />
+      {activeCourse ? (
+        <CourseLessonsPanel course={activeCourse} onBack={() => setActiveCourse(null)} />
+      ) : (
+        <CoursesPanel lang={lang} cefr={cefr} onOpenCourse={setActiveCourse} />
+      )}
+    </div>
+  );
+}
+
+function CoursesPanel({ lang, cefr, onOpenCourse }: {
+  lang: string;
+  cefr: string;
+  onOpenCourse: (c: { id: string; title_sorani: string; level_id: string }) => void;
+}) {
+  const { t } = useDialect();
+  const qc = useQueryClient();
+  const list = useServerFn(adminListCourses);
+  const upsert = useServerFn(adminUpsertCourse);
+  const del = useServerFn(adminDeleteCourse);
+  const q = useQuery({ queryKey: ["admin-courses", lang, cefr], queryFn: () => list({ data: { language: lang as never, cefr: cefr as never } }) });
+  const [editing, setEditing] = useState<null | Record<string, unknown>>(null);
+  const [open, setOpen] = useState(false);
+
+  const save = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => upsert({ data: payload as never }),
+    onSuccess: () => { toast.success(t("saved")); qc.invalidateQueries({ queryKey: ["admin-courses"] }); setOpen(false); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const remove = useMutation({
+    mutationFn: async (id: string) => del({ data: { id } }),
+    onSuccess: () => { toast.success(t("deleted")); qc.invalidateQueries({ queryKey: ["admin-courses"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const openNew = () => {
+    if (!q.data?.levelId) { toast.error("No level for this language/CEFR. Add one in the database first."); return; }
+    setEditing({
+      level_id: q.data.levelId,
+      order_index: (q.data.courses.length ?? 0),
+      title_sorani: "", title_badini: "", title_en: "",
+      description_sorani: "", description_badini: "", description_en: "",
+    });
+    setOpen(true);
+  };
+
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground mb-3">Themed units within {cefr} — e.g. "Greetings and Introductions", "Personal Information". Click a course to manage its lessons.</p>
+      <div className="flex justify-end mb-4"><Button onClick={openNew}>{t("add_new")}</Button></div>
+      <div className="grid gap-3">
+        {(q.data?.courses ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
+        {(q.data?.courses ?? []).map((c) => (
+          <Card key={c.id}>
+            <CardContent className="p-4 flex justify-between items-center gap-3">
+              <button type="button" className="text-left flex-1 min-w-0" onClick={() => onOpenCourse({ id: c.id, title_sorani: c.title_sorani, level_id: c.level_id })}>
+                <div className="font-medium">{c.order_index + 1}. {c.title_sorani}{c.title_en ? ` (${c.title_en})` : ""}</div>
+                <div className="text-sm text-muted-foreground">{c.title_badini} · {(c.lessons ?? []).length} lesson{(c.lessons ?? []).length === 1 ? "" : "s"}</div>
+              </button>
+              <div className="flex gap-2 shrink-0">
+                <Button variant="outline" size="sm" onClick={() => { setEditing(c as unknown as Record<string, unknown>); setOpen(true); }}>{t("edit")}</Button>
+                <Button variant="destructive" size="sm" onClick={() => { if (confirm(t("confirm_delete"))) remove.mutate(c.id); }}>{t("delete")}</Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Course</DialogTitle></DialogHeader>
+          {editing && <CourseForm value={editing} onChange={setEditing} />}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
+            <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending}>{t("save")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function CourseForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
+  const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
+  return (
+    <div className="grid gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div><Label>Order</Label><Input type="number" value={value.order_index as number} onChange={(e) => set("order_index", Number(e.target.value))} /></div>
+        <div><Label>Title (Sorani)</Label><Input value={(value.title_sorani ?? "") as string} onChange={(e) => set("title_sorani", e.target.value)} /></div>
+      </div>
+      <div><Label>Title (Badini)</Label><Input value={(value.title_badini ?? "") as string} onChange={(e) => set("title_badini", e.target.value)} /></div>
+      <div><Label>Title (English)</Label><Input placeholder="e.g. Greetings and Introductions" value={(value.title_en ?? "") as string} onChange={(e) => set("title_en", e.target.value)} /></div>
+      <div><Label>Description (Sorani)</Label><Textarea value={(value.description_sorani ?? "") as string} onChange={(e) => set("description_sorani", e.target.value)} /></div>
+      <div><Label>Description (Badini)</Label><Textarea value={(value.description_badini ?? "") as string} onChange={(e) => set("description_badini", e.target.value)} /></div>
+      <div><Label>Description (English)</Label><Textarea value={(value.description_en ?? "") as string} onChange={(e) => set("description_en", e.target.value)} /></div>
+    </div>
+  );
+}
+
+function CourseLessonsPanel({ course, onBack }: { course: { id: string; title_sorani: string; level_id: string }; onBack: () => void }) {
+  const { t } = useDialect();
+  const qc = useQueryClient();
   const list = useServerFn(adminListLessons);
   const upsert = useServerFn(adminUpsertLesson);
   const del = useServerFn(adminDeleteLesson);
-  const q = useQuery({ queryKey: ["admin-lessons", lang, cefr], queryFn: () => list({ data: { language: lang as never, cefr: cefr as never } }) });
+  const q = useQuery({ queryKey: ["admin-lessons", course.id], queryFn: () => list({ data: { courseId: course.id } }) });
   const [editing, setEditing] = useState<null | Record<string, unknown>>(null);
   const [open, setOpen] = useState(false);
 
@@ -111,15 +222,23 @@ function LessonsTab() {
   });
 
   const openNew = () => {
-    if (!q.data?.levelId) { toast.error("No level for this language/CEFR. Add one in the database first."); return; }
-    setEditing({ level_id: q.data.levelId, order_index: (q.data.lessons.length ?? 0), title_sorani: "", title_badini: "", title_en: "", dialogue_json: [] });
+    setEditing({
+      course_id: course.id,
+      level_id: course.level_id,
+      order_index: (q.data?.lessons.length ?? 0),
+      title_sorani: "", title_badini: "", title_en: "",
+      dialogue_json: [],
+    });
     setOpen(true);
   };
 
   return (
     <div>
-      <LangCefrPicker lang={lang} setLang={setLang} cefr={cefr} setCefr={setCefr} />
-      <div className="flex justify-end mb-4"><Button onClick={openNew}>{t("add_new")}</Button></div>
+      <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground mb-3">← Back to courses</button>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display text-lg font-semibold">{course.title_sorani}</h3>
+        <Button onClick={openNew}>{t("add_new")}</Button>
+      </div>
       <div className="grid gap-3">
         {(q.data?.lessons ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
         {(q.data?.lessons ?? []).map((l) => (
