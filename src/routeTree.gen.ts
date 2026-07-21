@@ -23,6 +23,7 @@ import { Route as AuthenticatedVideoIdRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedPlacementLangRouteImport } from './routes/_authenticated/placement.$lang'
 import { Route as AuthenticatedLessonIdRouteImport } from './routes/_authenticated/lesson.$id'
 import { Route as AuthenticatedLearnLangRouteImport } from './routes/_authenticated/learn.$lang'
+import { Route as AuthenticatedCourseIdRouteImport } from './routes/_authenticated/course.$id'
 import { Route as AuthenticatedBooksLangRouteImport } from './routes/_authenticated/books.$lang'
 import { Route as AuthenticatedBookIdRouteImport } from './routes/_authenticated/book.$id'
 
@@ -96,6 +97,11 @@ const AuthenticatedLearnLangRoute = AuthenticatedLearnLangRouteImport.update({
   path: '/learn/$lang',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCourseIdRoute = AuthenticatedCourseIdRouteImport.update({
+  id: '/course/$id',
+  path: '/course/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedBooksLangRoute = AuthenticatedBooksLangRouteImport.update({
   id: '/books/$lang',
   path: '/books/$lang',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/speak': typeof AuthenticatedSpeakRoute
   '/book/$id': typeof AuthenticatedBookIdRoute
   '/books/$lang': typeof AuthenticatedBooksLangRoute
+  '/course/$id': typeof AuthenticatedCourseIdRoute
   '/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -134,6 +141,7 @@ export interface FileRoutesByTo {
   '/speak': typeof AuthenticatedSpeakRoute
   '/book/$id': typeof AuthenticatedBookIdRoute
   '/books/$lang': typeof AuthenticatedBooksLangRoute
+  '/course/$id': typeof AuthenticatedCourseIdRoute
   '/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -153,6 +161,7 @@ export interface FileRoutesById {
   '/_authenticated/speak': typeof AuthenticatedSpeakRoute
   '/_authenticated/book/$id': typeof AuthenticatedBookIdRoute
   '/_authenticated/books/$lang': typeof AuthenticatedBooksLangRoute
+  '/_authenticated/course/$id': typeof AuthenticatedCourseIdRoute
   '/_authenticated/learn/$lang': typeof AuthenticatedLearnLangRoute
   '/_authenticated/lesson/$id': typeof AuthenticatedLessonIdRoute
   '/_authenticated/placement/$lang': typeof AuthenticatedPlacementLangRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/speak'
     | '/book/$id'
     | '/books/$lang'
+    | '/course/$id'
     | '/learn/$lang'
     | '/lesson/$id'
     | '/placement/$lang'
@@ -189,6 +199,7 @@ export interface FileRouteTypes {
     | '/speak'
     | '/book/$id'
     | '/books/$lang'
+    | '/course/$id'
     | '/learn/$lang'
     | '/lesson/$id'
     | '/placement/$lang'
@@ -207,6 +218,7 @@ export interface FileRouteTypes {
     | '/_authenticated/speak'
     | '/_authenticated/book/$id'
     | '/_authenticated/books/$lang'
+    | '/_authenticated/course/$id'
     | '/_authenticated/learn/$lang'
     | '/_authenticated/lesson/$id'
     | '/_authenticated/placement/$lang'
@@ -321,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLearnLangRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/course/$id': {
+      id: '/_authenticated/course/$id'
+      path: '/course/$id'
+      fullPath: '/course/$id'
+      preLoaderRoute: typeof AuthenticatedCourseIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/books/$lang': {
       id: '/_authenticated/books/$lang'
       path: '/books/$lang'
@@ -346,6 +365,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSpeakRoute: typeof AuthenticatedSpeakRoute
   AuthenticatedBookIdRoute: typeof AuthenticatedBookIdRoute
   AuthenticatedBooksLangRoute: typeof AuthenticatedBooksLangRoute
+  AuthenticatedCourseIdRoute: typeof AuthenticatedCourseIdRoute
   AuthenticatedLearnLangRoute: typeof AuthenticatedLearnLangRoute
   AuthenticatedLessonIdRoute: typeof AuthenticatedLessonIdRoute
   AuthenticatedPlacementLangRoute: typeof AuthenticatedPlacementLangRoute
@@ -362,6 +382,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSpeakRoute: AuthenticatedSpeakRoute,
   AuthenticatedBookIdRoute: AuthenticatedBookIdRoute,
   AuthenticatedBooksLangRoute: AuthenticatedBooksLangRoute,
+  AuthenticatedCourseIdRoute: AuthenticatedCourseIdRoute,
   AuthenticatedLearnLangRoute: AuthenticatedLearnLangRoute,
   AuthenticatedLessonIdRoute: AuthenticatedLessonIdRoute,
   AuthenticatedPlacementLangRoute: AuthenticatedPlacementLangRoute,
