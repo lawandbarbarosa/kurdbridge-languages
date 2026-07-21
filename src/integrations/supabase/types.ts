@@ -58,6 +58,53 @@ export type Database = {
           },
         ]
       }
+      courses: {
+        Row: {
+          created_at: string
+          description_badini: string | null
+          description_en: string | null
+          description_sorani: string | null
+          id: string
+          level_id: string
+          order_index: number
+          title_badini: string
+          title_en: string | null
+          title_sorani: string
+        }
+        Insert: {
+          created_at?: string
+          description_badini?: string | null
+          description_en?: string | null
+          description_sorani?: string | null
+          id?: string
+          level_id: string
+          order_index?: number
+          title_badini: string
+          title_en?: string | null
+          title_sorani: string
+        }
+        Update: {
+          created_at?: string
+          description_badini?: string | null
+          description_en?: string | null
+          description_sorani?: string | null
+          id?: string
+          level_id?: string
+          order_index?: number
+          title_badini?: string
+          title_en?: string | null
+          title_sorani?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       languages: {
         Row: {
           code: Database["public"]["Enums"]["target_lang"]
@@ -119,6 +166,7 @@ export type Database = {
       }
       lessons: {
         Row: {
+          course_id: string
           created_at: string
           dialogue_json: Json
           grammar_md_badini: string | null
@@ -135,6 +183,7 @@ export type Database = {
           title_sorani: string
         }
         Insert: {
+          course_id: string
           created_at?: string
           dialogue_json?: Json
           grammar_md_badini?: string | null
@@ -151,6 +200,7 @@ export type Database = {
           title_sorani: string
         }
         Update: {
+          course_id?: string
           created_at?: string
           dialogue_json?: Json
           grammar_md_badini?: string | null
@@ -167,6 +217,13 @@ export type Database = {
           title_sorani?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lessons_level_id_fkey"
             columns: ["level_id"]
