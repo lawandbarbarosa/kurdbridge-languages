@@ -141,7 +141,7 @@ function Dashboard() {
                 </Button>
               )}
               <Button asChild variant="outline" size="lg">
-                <Link to={`/learn/${data.activeLang}`}>{t("lesson_tree")}</Link>
+                <Link to={`/learn/${data.activeLang}`}>{t("courses")}</Link>
               </Button>
             </div>
           </div>
