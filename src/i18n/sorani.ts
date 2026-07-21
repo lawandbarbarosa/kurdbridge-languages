@@ -66,6 +66,9 @@ const s = {
 
   // Lesson / tree
   lesson_tree: "داری وانەکان",
+  courses: "کۆرسەکان",
+  no_courses: "هێشتا هیچ کۆرسێک نییە",
+  back_to_course: "گەڕانەوە بۆ کۆرس",
   level: "ئاست",
   lesson: "وانە",
   grammar: "ڕێزمان",
