@@ -107,6 +107,8 @@ export const badini: typeof sorani = {
   meaning_kurdish: "واتا (کوردی)",
   save_highlight: "پاراستن",
   remove_highlight: "ژێبرن",
+  generate: "دروستکرن",
+  generating: "دروستکرن...",
   pos_noun: "ناڤ",
   pos_verb: "لێکەر",
   pos_adjective: "ڕەنگدێر",
