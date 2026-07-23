@@ -113,6 +113,8 @@ const s = {
   meaning_kurdish: "واتا (کوردی)",
   save_highlight: "پاشەکەوتکردن",
   remove_highlight: "سڕینەوە",
+  generate: "دروستکردن",
+  generating: "دروستکردن...",
   pos_noun: "ناو",
   pos_verb: "کردار",
   pos_adjective: "ڕەنگدەر",
