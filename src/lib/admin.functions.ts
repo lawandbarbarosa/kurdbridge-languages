@@ -1,1318 +1,554 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { AppShell } from "@/components/app-shell";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Sparkles, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { useDialect } from "@/hooks/use-dialect";
-import { cn } from "@/lib/utils";
-import {
-  getIsAdmin,
-  adminListLessons,
-  adminListCourses,
-  adminListVocab,
-  adminListVideos,
-  adminListBooks,
-  adminListUsers,
-  adminUpsertLesson,
-  adminDeleteLesson,
-  adminUpsertCourse,
-  adminDeleteCourse,
-  adminUpsertVocab,
-  adminDeleteVocab,
-  adminUpsertVideo,
-  adminDeleteVideo,
-  adminUpsertBook,
-  adminDeleteBook,
-  adminSetUserRole,
-  transcribeVideoFile,
-  translateTranscriptLines,
-  generateWordMeaning,
-} from "@/lib/admin.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export const Route = createFileRoute("/_authenticated/admin")({
-  ssr: false,
-  beforeLoad: async ({ context }) => {
-    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: context.user.id, _role: "admin" });
-    if (!isAdmin) throw redirect({ to: "/dashboard" });
-  },
-  component: AdminPage,
+const langEnum = z.enum(["en", "de", "ar", "ko"]);
+const cefrEnum = z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function assertAdmin(context: any) {
+  const { data, error } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+  if (error) throw new Error("role check failed");
+  if (!data) throw new Error("Forbidden");
+}
+
+/* -------------------- IS ADMIN -------------------- */
+export const getIsAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    return { isAdmin: Boolean(data) };
+  });
+
+/* -------------------- ADMIN CONTENT READS -------------------- */
+export const adminListLessons = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ courseId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: lessons } = await context.supabase
+      .from("lessons")
+      .select("*, lesson_exercises(*)")
+      .eq("course_id", data.courseId)
+      .order("order_index");
+    return { lessons: lessons ?? [] };
+  });
+
+export const adminListCourses = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ language: langEnum, cefr: cefrEnum }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: level } = await context.supabase
+      .from("levels")
+      .select("id")
+      .eq("language_code", data.language)
+      .eq("cefr", data.cefr)
+      .maybeSingle();
+    if (!level) return { levelId: null, courses: [] };
+    const { data: courses } = await context.supabase
+      .from("courses")
+      .select("*, lessons(id)")
+      .eq("level_id", level.id)
+      .order("order_index");
+    return { levelId: level.id, courses: courses ?? [] };
+  });
+
+export const adminListVocab = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ language: langEnum, cefr: cefrEnum }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: words } = await context.supabase
+      .from("vocab_words")
+      .select("*")
+      .eq("language_code", data.language)
+      .eq("level_cefr", data.cefr)
+      .order("word");
+    return { words: words ?? [] };
+  });
+
+export const adminListVideos = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ language: langEnum }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: videos } = await context.supabase
+      .from("videos")
+      .select("*")
+      .eq("language_code", data.language)
+      .order("level_cefr");
+    return { videos: videos ?? [] };
+  });
+
+export const adminListBooks = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ language: langEnum }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: books } = await context.supabase
+      .from("books")
+      .select("*")
+      .eq("language_code", data.language)
+      .order("level_cefr");
+    return { books: books ?? [] };
+  });
+
+export const adminListUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data: profiles } = await context.supabase
+      .from("profiles")
+      .select("id, display_name, ui_dialect, active_target_lang, created_at")
+      .order("created_at", { ascending: false });
+    const { data: roles } = await context.supabase.from("user_roles").select("user_id, role");
+    const rolesByUser = new Map<string, string[]>();
+    for (const r of roles ?? []) {
+      const arr = rolesByUser.get(r.user_id) ?? [];
+      arr.push(r.role);
+      rolesByUser.set(r.user_id, arr);
+    }
+    return {
+      users: (profiles ?? []).map((p) => ({ ...p, roles: rolesByUser.get(p.id) ?? [] })),
+    };
+  });
+
+/* -------------------- ADMIN WRITES -------------------- */
+export const adminUpsertCourse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      level_id: z.string().uuid(),
+      order_index: z.number().int().min(0),
+      title_sorani: z.string().min(1).max(200),
+      title_badini: z.string().min(1).max(200),
+      title_en: z.string().max(200).optional(),
+      description_sorani: z.string().max(1000).optional(),
+      description_badini: z.string().max(1000).optional(),
+      description_en: z.string().max(1000).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { data: saved, error } = await context.supabase.from("courses").upsert(data).select().single();
+    if (error) throw new Error(error.message);
+    return { course: saved };
+  });
+
+export const adminDeleteCourse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("courses").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminUpsertLesson = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      level_id: z.string().uuid(),
+      course_id: z.string().uuid(),
+      order_index: z.number().int().min(0),
+      title_sorani: z.string().min(1).max(200),
+      title_badini: z.string().min(1).max(200),
+      title_en: z.string().max(200).optional(),
+      summary_sorani: z.string().max(1000).optional(),
+      summary_badini: z.string().max(1000).optional(),
+      summary_en: z.string().max(1000).optional(),
+      grammar_md_sorani: z.string().max(20000).optional(),
+      grammar_md_badini: z.string().max(20000).optional(),
+      grammar_md_en: z.string().max(20000).optional(),
+      dialogue_json: z.array(z.object({ speaker: z.string(), line: z.string(), translation_ku: z.string().optional() })).default([]),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const row = { ...data };
+    const { data: saved, error } = await context.supabase.from("lessons").upsert(row).select().single();
+    if (error) throw new Error(error.message);
+    return { lesson: saved };
+  });
+
+export const adminDeleteLesson = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("lessons").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminUpsertExercise = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      lesson_id: z.string().uuid(),
+      order_index: z.number().int().min(0),
+      type: z.enum(["multiple_choice", "fill_blank", "translate", "listening"]),
+      prompt_json: z.record(z.string(), z.unknown()),
+      answer_json: z.record(z.string(), z.unknown()),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: saved, error } = await context.supabase.from("lesson_exercises").upsert(data as any).select().single();
+    if (error) throw new Error(error.message);
+    return { exercise: saved };
+  });
+
+export const adminDeleteExercise = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("lesson_exercises").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminUpsertVocab = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      language_code: langEnum,
+      level_cefr: cefrEnum,
+      topic: z.string().min(1).max(100),
+      word: z.string().min(1).max(200),
+      kurdish_sorani: z.string().min(1).max(200),
+      kurdish_badini: z.string().min(1).max(200),
+      pronunciation: z.string().max(200).optional(),
+      example_sentence: z.string().max(500).optional(),
+      example_sorani: z.string().max(500).optional(),
+      example_badini: z.string().max(500).optional(),
+      audio_url: z.string().url().max(500).optional().or(z.literal("")),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const payload = { ...data, audio_url: data.audio_url || null };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: saved, error } = await context.supabase.from("vocab_words").upsert(payload as any).select().single();
+    if (error) throw new Error(error.message);
+    return { word: saved };
+  });
+
+export const adminDeleteVocab = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("vocab_words").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminUpsertVideo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      language_code: langEnum,
+      level_cefr: cefrEnum,
+      youtube_id: z.string().max(50).optional().nullable(),
+      video_path: z.string().max(500).optional().nullable(),
+      banner_path: z.string().max(500).optional().nullable(),
+      title: z.string().min(1).max(300),
+      description: z.string().max(2000).optional(),
+      duration_seconds: z.number().int().min(0).nullable().optional(),
+      transcript_json: z.array(z.object({
+        t: z.number().optional(),
+        en: z.string(),
+        ku_sorani: z.string().optional(),
+        ku_badini: z.string().optional(),
+        highlights: z.array(z.object({
+          id: z.string().max(100),
+          start_index: z.number().int().min(0),
+          end_index: z.number().int().min(0),
+          word: z.string().min(1).max(200),
+          part_of_speech: z.string().max(50).default("other"),
+          meaning_en: z.string().max(500).default(""),
+          meaning_ku_sorani: z.string().max(500).default(""),
+          meaning_ku_badini: z.string().max(500).default(""),
+        })).optional().default([]),
+      })).default([]),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const payload = { ...data, youtube_id: data.youtube_id || null, video_path: data.video_path || null, banner_path: data.banner_path || null };
+    const { data: saved, error } = await context.supabase.from("videos").upsert(payload).select().single();
+    if (error) throw new Error(error.message);
+    return { video: saved };
+  });
+
+const bookParagraphSchema = z.object({
+  text: z.string(),
+  ku_sorani: z.string().optional(),
+  ku_badini: z.string().optional(),
+  highlights: z.array(z.object({
+    id: z.string().max(100),
+    start_index: z.number().int().min(0),
+    end_index: z.number().int().min(0),
+    word: z.string().min(1).max(200),
+    part_of_speech: z.string().max(50).default("other"),
+    meaning_en: z.string().max(500).default(""),
+    meaning_ku_sorani: z.string().max(500).default(""),
+    meaning_ku_badini: z.string().max(500).default(""),
+  })).optional().default([]),
 });
 
-type Tab = "lessons" | "vocab" | "videos" | "books" | "users";
-const LANGS = ["en", "de", "ar", "ko"] as const;
-const CEFRS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-
-function AdminPage() {
-  const { t } = useDialect();
-  const [tab, setTab] = useState<Tab>("lessons");
-  return (
-    <AppShell>
-      <div className="mb-6">
-        <h1 className="text-3xl font-display font-bold">{t("admin")}</h1>
-      </div>
-      <div className="mb-6 flex gap-2 flex-wrap">
-        {(["lessons", "vocab", "videos", "books", "users"] as Tab[]).map((v) => (
-          <Button key={v} variant={tab === v ? "default" : "outline"} onClick={() => setTab(v)}>
-            {t(`admin_${v}` as never)}
-          </Button>
-        ))}
-      </div>
-      {tab === "lessons" && <LessonsTab />}
-      {tab === "vocab" && <VocabTab />}
-      {tab === "videos" && <VideosTab />}
-      {tab === "books" && <BooksTab />}
-      {tab === "users" && <UsersTab />}
-    </AppShell>
-  );
-}
-
-function LangCefrPicker({ lang, setLang, cefr, setCefr }: { lang: string; setLang: (v: string) => void; cefr: string; setCefr: (v: string) => void }) {
-  return (
-    <div className="flex gap-2 mb-4">
-      <Select value={lang} onValueChange={setLang}>
-        <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-        <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
-      </Select>
-      <Select value={cefr} onValueChange={setCefr}>
-        <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-        <SelectContent>{CEFRS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-function LessonsTab() {
-  const [lang, setLang] = useState("en");
-  const [cefr, setCefr] = useState("A1");
-  const [activeCourse, setActiveCourse] = useState<null | { id: string; title_sorani: string; level_id: string }>(null);
-
-  return (
-    <div>
-      <LangCefrPicker
-        lang={lang}
-        setLang={(v) => { setLang(v); setActiveCourse(null); }}
-        cefr={cefr}
-        setCefr={(v) => { setCefr(v); setActiveCourse(null); }}
-      />
-      {activeCourse ? (
-        <CourseLessonsPanel course={activeCourse} onBack={() => setActiveCourse(null)} />
-      ) : (
-        <CoursesPanel lang={lang} cefr={cefr} onOpenCourse={setActiveCourse} />
-      )}
-    </div>
-  );
-}
-
-function CoursesPanel({ lang, cefr, onOpenCourse }: {
-  lang: string;
-  cefr: string;
-  onOpenCourse: (c: { id: string; title_sorani: string; level_id: string }) => void;
-}) {
-  const { t } = useDialect();
-  const qc = useQueryClient();
-  const list = useServerFn(adminListCourses);
-  const upsert = useServerFn(adminUpsertCourse);
-  const del = useServerFn(adminDeleteCourse);
-  const q = useQuery({ queryKey: ["admin-courses", lang, cefr], queryFn: () => list({ data: { language: lang as never, cefr: cefr as never } }) });
-  const [editing, setEditing] = useState<null | Record<string, unknown>>(null);
-  const [open, setOpen] = useState(false);
-
-  const save = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => upsert({ data: payload as never }),
-    onSuccess: () => { toast.success(t("saved")); qc.invalidateQueries({ queryKey: ["admin-courses"] }); setOpen(false); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const remove = useMutation({
-    mutationFn: async (id: string) => del({ data: { id } }),
-    onSuccess: () => { toast.success(t("deleted")); qc.invalidateQueries({ queryKey: ["admin-courses"] }); },
-    onError: (e: Error) => toast.error(e.message),
+export const adminUpsertBook = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      id: z.string().uuid().optional(),
+      language_code: langEnum,
+      level_cefr: cefrEnum,
+      title: z.string().min(1).max(300),
+      author: z.string().max(200).optional().nullable(),
+      description: z.string().max(2000).optional(),
+      cover_path: z.string().max(500).optional().nullable(),
+      content_json: z.array(bookParagraphSchema).default([]),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const payload = { ...data, author: data.author || null, cover_path: data.cover_path || null };
+    const { data: saved, error } = await context.supabase.from("books").upsert(payload).select().single();
+    if (error) throw new Error(error.message);
+    return { book: saved };
   });
 
-  const openNew = () => {
-    if (!q.data?.levelId) { toast.error("No level for this language/CEFR. Add one in the database first."); return; }
-    setEditing({
-      level_id: q.data.levelId,
-      order_index: (q.data.courses.length ?? 0),
-      title_sorani: "", title_badini: "", title_en: "",
-      description_sorani: "", description_badini: "", description_en: "",
+/* -------------------- TRANSCRIBE UPLOADED VIDEO -------------------- */
+export const transcribeVideoFile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ path: z.string().min(1).max(500) }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) throw new Error("ElevenLabs is not connected");
+    const { data: file, error } = await context.supabase.storage.from("videos").download(data.path);
+    if (error || !file) throw new Error(error?.message || "Could not read uploaded video");
+
+    const filename = data.path.split("/").pop() || "video.mp4";
+    // Cloudflare Workers: convert to ArrayBuffer so FormData/fetch streams it reliably
+    const buf = await file.arrayBuffer();
+    const fd = new FormData();
+    fd.append("file", new Blob([buf], { type: file.type || "video/mp4" }), filename);
+    fd.append("model_id", "scribe_v1");
+    fd.append("tag_audio_events", "false");
+    fd.append("diarize", "false");
+
+    const res = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+      method: "POST",
+      headers: { "xi-api-key": apiKey },
+      body: fd,
     });
-    setOpen(true);
-  };
-
-  return (
-    <div>
-      <p className="text-sm text-muted-foreground mb-3">Themed units within {cefr} — e.g. "Greetings and Introductions", "Personal Information". Click a course to manage its lessons.</p>
-      <div className="flex justify-end mb-4"><Button onClick={openNew}>{t("add_new")}</Button></div>
-      <div className="grid gap-3">
-        {(q.data?.courses ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
-        {(q.data?.courses ?? []).map((c) => (
-          <Card key={c.id}>
-            <CardContent className="p-4 flex justify-between items-center gap-3">
-              <button type="button" className="text-left flex-1 min-w-0" onClick={() => onOpenCourse({ id: c.id, title_sorani: c.title_sorani, level_id: c.level_id })}>
-                <div className="font-medium">{c.order_index + 1}. {c.title_sorani}{c.title_en ? ` (${c.title_en})` : ""}</div>
-                <div className="text-sm text-muted-foreground">{c.title_badini} · {(c.lessons ?? []).length} lesson{(c.lessons ?? []).length === 1 ? "" : "s"}</div>
-              </button>
-              <div className="flex gap-2 shrink-0">
-                <Button variant="outline" size="sm" onClick={() => { setEditing(c as unknown as Record<string, unknown>); setOpen(true); }}>{t("edit")}</Button>
-                <Button variant="destructive" size="sm" onClick={() => { if (confirm(t("confirm_delete"))) remove.mutate(c.id); }}>{t("delete")}</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Course</DialogTitle></DialogHeader>
-          {editing && <CourseForm value={editing} onChange={setEditing} />}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-            <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending}>{t("save")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function CourseForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
-  const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
-  return (
-    <div className="grid gap-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div><Label>Order</Label><Input type="number" value={value.order_index as number} onChange={(e) => set("order_index", Number(e.target.value))} /></div>
-        <div><Label>Title (Sorani)</Label><Input value={(value.title_sorani ?? "") as string} onChange={(e) => set("title_sorani", e.target.value)} /></div>
-      </div>
-      <div><Label>Title (Badini)</Label><Input value={(value.title_badini ?? "") as string} onChange={(e) => set("title_badini", e.target.value)} /></div>
-      <div><Label>Title (English)</Label><Input placeholder="e.g. Greetings and Introductions" value={(value.title_en ?? "") as string} onChange={(e) => set("title_en", e.target.value)} /></div>
-      <div><Label>Description (Sorani)</Label><Textarea value={(value.description_sorani ?? "") as string} onChange={(e) => set("description_sorani", e.target.value)} /></div>
-      <div><Label>Description (Badini)</Label><Textarea value={(value.description_badini ?? "") as string} onChange={(e) => set("description_badini", e.target.value)} /></div>
-      <div><Label>Description (English)</Label><Textarea value={(value.description_en ?? "") as string} onChange={(e) => set("description_en", e.target.value)} /></div>
-    </div>
-  );
-}
-
-function CourseLessonsPanel({ course, onBack }: { course: { id: string; title_sorani: string; level_id: string }; onBack: () => void }) {
-  const { t } = useDialect();
-  const qc = useQueryClient();
-  const list = useServerFn(adminListLessons);
-  const upsert = useServerFn(adminUpsertLesson);
-  const del = useServerFn(adminDeleteLesson);
-  const q = useQuery({ queryKey: ["admin-lessons", course.id], queryFn: () => list({ data: { courseId: course.id } }) });
-  const [editing, setEditing] = useState<null | Record<string, unknown>>(null);
-  const [open, setOpen] = useState(false);
-
-  const save = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => upsert({ data: payload as never }),
-    onSuccess: () => { toast.success(t("saved")); qc.invalidateQueries({ queryKey: ["admin-lessons"] }); setOpen(false); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const remove = useMutation({
-    mutationFn: async (id: string) => del({ data: { id } }),
-    onSuccess: () => { toast.success(t("deleted")); qc.invalidateQueries({ queryKey: ["admin-lessons"] }); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const openNew = () => {
-    setEditing({
-      course_id: course.id,
-      level_id: course.level_id,
-      order_index: (q.data?.lessons.length ?? 0),
-      title_sorani: "", title_badini: "", title_en: "",
-      dialogue_json: [],
-    });
-    setOpen(true);
-  };
-
-  return (
-    <div>
-      <button onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground mb-3">← Back to courses</button>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display text-lg font-semibold">{course.title_sorani}</h3>
-        <Button onClick={openNew}>{t("add_new")}</Button>
-      </div>
-      <div className="grid gap-3">
-        {(q.data?.lessons ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
-        {(q.data?.lessons ?? []).map((l) => (
-          <Card key={l.id}>
-            <CardContent className="p-4 flex justify-between items-center">
-              <div>
-                <div className="font-medium">{l.order_index + 1}. {l.title_sorani}</div>
-                <div className="text-sm text-muted-foreground">{l.title_badini}</div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setEditing(l as unknown as Record<string, unknown>); setOpen(true); }}>{t("edit")}</Button>
-                <Button variant="destructive" size="sm" onClick={() => { if (confirm(t("confirm_delete"))) remove.mutate(l.id); }}>{t("delete")}</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{t("admin_lessons")}</DialogTitle></DialogHeader>
-          {editing && (
-            <LessonForm value={editing} onChange={setEditing} />
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-            <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending}>{t("save")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function LessonForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
-  const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
-  return (
-    <div className="grid gap-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div><Label>Order</Label><Input type="number" value={value.order_index as number} onChange={(e) => set("order_index", Number(e.target.value))} /></div>
-        <div><Label>Title (Sorani)</Label><Input value={(value.title_sorani ?? "") as string} onChange={(e) => set("title_sorani", e.target.value)} /></div>
-      </div>
-      <div><Label>Title (Badini)</Label><Input value={(value.title_badini ?? "") as string} onChange={(e) => set("title_badini", e.target.value)} /></div>
-      <div><Label>Title (English)</Label><Input value={(value.title_en ?? "") as string} onChange={(e) => set("title_en", e.target.value)} /></div>
-      <div><Label>Summary (Sorani)</Label><Textarea value={(value.summary_sorani ?? "") as string} onChange={(e) => set("summary_sorani", e.target.value)} /></div>
-      <div><Label>Summary (Badini)</Label><Textarea value={(value.summary_badini ?? "") as string} onChange={(e) => set("summary_badini", e.target.value)} /></div>
-      <div><Label>Summary (English)</Label><Textarea value={(value.summary_en ?? "") as string} onChange={(e) => set("summary_en", e.target.value)} /></div>
-      <div><Label>Grammar (Sorani, Markdown)</Label><Textarea rows={5} value={(value.grammar_md_sorani ?? "") as string} onChange={(e) => set("grammar_md_sorani", e.target.value)} /></div>
-      <div><Label>Grammar (Badini, Markdown)</Label><Textarea rows={5} value={(value.grammar_md_badini ?? "") as string} onChange={(e) => set("grammar_md_badini", e.target.value)} /></div>
-      <div><Label>Grammar (English, Markdown)</Label><Textarea rows={5} value={(value.grammar_md_en ?? "") as string} onChange={(e) => set("grammar_md_en", e.target.value)} /></div>
-      <div>
-        <Label>Dialogue JSON: [{"{"}"speaker","line","translation_ku"{"}"}]</Label>
-        <Textarea rows={4} value={JSON.stringify(value.dialogue_json ?? [], null, 2)} onChange={(e) => { try { set("dialogue_json", JSON.parse(e.target.value)); } catch { /* keep typing */ } }} />
-      </div>
-    </div>
-  );
-}
-
-function VocabTab() {
-  const { t } = useDialect();
-  const qc = useQueryClient();
-  const [lang, setLang] = useState("en");
-  const [cefr, setCefr] = useState("A1");
-  const list = useServerFn(adminListVocab);
-  const upsert = useServerFn(adminUpsertVocab);
-  const del = useServerFn(adminDeleteVocab);
-  const q = useQuery({ queryKey: ["admin-vocab", lang, cefr], queryFn: () => list({ data: { language: lang as never, cefr: cefr as never } }) });
-  const [editing, setEditing] = useState<null | Record<string, unknown>>(null);
-  const [open, setOpen] = useState(false);
-
-  const save = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => upsert({ data: payload as never }),
-    onSuccess: () => { toast.success(t("saved")); qc.invalidateQueries({ queryKey: ["admin-vocab"] }); setOpen(false); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const remove = useMutation({
-    mutationFn: async (id: string) => del({ data: { id } }),
-    onSuccess: () => { toast.success(t("deleted")); qc.invalidateQueries({ queryKey: ["admin-vocab"] }); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <div>
-      <LangCefrPicker lang={lang} setLang={setLang} cefr={cefr} setCefr={setCefr} />
-      <div className="flex justify-end mb-4">
-        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: cefr, topic: "general", word: "", kurdish_sorani: "", kurdish_badini: "" }); setOpen(true); }}>{t("add_new")}</Button>
-      </div>
-      <div className="grid gap-2">
-        {(q.data?.words ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
-        {(q.data?.words ?? []).map((w) => (
-          <Card key={w.id}>
-            <CardContent className="p-3 flex justify-between items-center">
-              <div>
-                <div className="font-medium">{w.word} <span className="text-muted-foreground text-sm">— {w.kurdish_sorani}</span></div>
-                <div className="text-xs text-muted-foreground">{w.topic} · {w.level_cefr}</div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setEditing(w as unknown as Record<string, unknown>); setOpen(true); }}>{t("edit")}</Button>
-                <Button variant="destructive" size="sm" onClick={() => { if (confirm(t("confirm_delete"))) remove.mutate(w.id); }}>{t("delete")}</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{t("admin_vocab")}</DialogTitle></DialogHeader>
-          {editing && <VocabForm value={editing} onChange={setEditing} />}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-            <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending}>{t("save")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function VocabForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
-  const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
-  return (
-    <div className="grid gap-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div><Label>Language</Label>
-          <Select value={value.language_code as string} onValueChange={(v) => set("language_code", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div><Label>CEFR</Label>
-          <Select value={value.level_cefr as string} onValueChange={(v) => set("level_cefr", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{CEFRS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div><Label>Topic</Label><Input value={(value.topic ?? "") as string} onChange={(e) => set("topic", e.target.value)} /></div>
-      <div><Label>Word</Label><Input value={(value.word ?? "") as string} onChange={(e) => set("word", e.target.value)} /></div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div><Label>Kurdish (Sorani)</Label><Input value={(value.kurdish_sorani ?? "") as string} onChange={(e) => set("kurdish_sorani", e.target.value)} /></div>
-        <div><Label>Kurdish (Badini)</Label><Input value={(value.kurdish_badini ?? "") as string} onChange={(e) => set("kurdish_badini", e.target.value)} /></div>
-      </div>
-      <div><Label>Pronunciation</Label><Input value={(value.pronunciation ?? "") as string} onChange={(e) => set("pronunciation", e.target.value)} /></div>
-      <div><Label>Example sentence</Label><Input value={(value.example_sentence ?? "") as string} onChange={(e) => set("example_sentence", e.target.value)} /></div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div><Label>Example (Sorani)</Label><Input value={(value.example_sorani ?? "") as string} onChange={(e) => set("example_sorani", e.target.value)} /></div>
-        <div><Label>Example (Badini)</Label><Input value={(value.example_badini ?? "") as string} onChange={(e) => set("example_badini", e.target.value)} /></div>
-      </div>
-      <div><Label>Audio URL</Label><Input value={(value.audio_url ?? "") as string} onChange={(e) => set("audio_url", e.target.value)} /></div>
-    </div>
-  );
-}
-
-function VideosTab() {
-  const { t } = useDialect();
-  const qc = useQueryClient();
-  const [lang, setLang] = useState("en");
-  const list = useServerFn(adminListVideos);
-  const upsert = useServerFn(adminUpsertVideo);
-  const del = useServerFn(adminDeleteVideo);
-  const q = useQuery({ queryKey: ["admin-videos", lang], queryFn: () => list({ data: { language: lang as never } }) });
-  const [editing, setEditing] = useState<null | Record<string, unknown>>(null);
-  const [open, setOpen] = useState(false);
-
-  const save = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => upsert({ data: payload as never }),
-    onSuccess: () => { toast.success(t("saved")); qc.invalidateQueries({ queryKey: ["admin-videos"] }); setOpen(false); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const remove = useMutation({
-    mutationFn: async (id: string) => del({ data: { id } }),
-    onSuccess: () => { toast.success(t("deleted")); qc.invalidateQueries({ queryKey: ["admin-videos"] }); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <div>
-      <div className="flex gap-2 mb-4 items-center">
-        <Select value={lang} onValueChange={setLang}>
-          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-          <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
-        </Select>
-        <div className="flex-1" />
-        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: "A1", title: "", video_path: "", banner_path: "", youtube_id: "", transcript_json: [] }); setOpen(true); }}>{t("add_new")}</Button>
-      </div>
-      <div className="grid gap-2">
-        {(q.data?.videos ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
-        {(q.data?.videos ?? []).map((v) => (
-          <Card key={v.id}>
-            <CardContent className="p-3 flex justify-between items-center">
-              <div>
-                <div className="font-medium">{v.title}</div>
-                <div className="text-xs text-muted-foreground">{v.level_cefr} · {v.video_path ? "uploaded" : v.youtube_id ? `YT: ${v.youtube_id}` : "no source"}</div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setEditing(v as unknown as Record<string, unknown>); setOpen(true); }}>{t("edit")}</Button>
-                <Button variant="destructive" size="sm" onClick={() => { if (confirm(t("confirm_delete"))) remove.mutate(v.id); }}>{t("delete")}</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{t("admin_videos")}</DialogTitle></DialogHeader>
-          {editing && <VideoForm value={editing} onChange={setEditing} />}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-            <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending}>{t("save")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
-  const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
-  const [uploading, setUploading] = useState(false);
-  const [uploadingBanner, setUploadingBanner] = useState(false);
-  const [transcribing, setTranscribing] = useState(false);
-  const [translating, setTranslating] = useState(false);
-  const transcribe = useServerFn(transcribeVideoFile);
-  const translateFn = useServerFn(translateTranscriptLines);
-
-  const onUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop() || "mp4";
-      const path = `${(value.language_code as string) || "en"}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("videos").upload(path, file, { upsert: false, contentType: file.type });
-      if (error) throw error;
-      set("video_path", path);
-      toast.success("Uploaded");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setUploading(false);
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Transcription failed [${res.status}]: ${body}`);
     }
-  };
+    const json = (await res.json()) as { words?: Array<{ text: string; start: number; end: number; type?: string }> };
+    const words = (json.words ?? []).filter((w) => w.type !== "spacing" && w.text?.trim());
 
-  const onBannerUpload = async (file: File) => {
-    setUploadingBanner(true);
-    try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${(value.language_code as string) || "en"}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("video-banners").upload(path, file, { upsert: false, contentType: file.type });
-      if (error) throw error;
-      set("banner_path", path);
-      toast.success("Banner uploaded");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setUploadingBanner(false);
+    // Group words into lines: break on sentence-ending punctuation, long silences, or >14 words
+    const lines: Array<{ t: number; en: string }> = [];
+    let cur: typeof words = [];
+    let lastEnd = 0;
+    for (const w of words) {
+      const gap = cur.length ? w.start - lastEnd : 0;
+      if (cur.length >= 14 || gap > 1.2) {
+        if (cur.length) lines.push({ t: cur[0].start, en: cur.map((x) => x.text).join(" ").replace(/\s+([.,!?;:])/g, "$1").trim() });
+        cur = [];
+      }
+      cur.push(w);
+      lastEnd = w.end;
+      if (/[.!?]$/.test(w.text) && cur.length >= 3) {
+        lines.push({ t: cur[0].start, en: cur.map((x) => x.text).join(" ").replace(/\s+([.,!?;:])/g, "$1").trim() });
+        cur = [];
+      }
     }
-  };
+    if (cur.length) lines.push({ t: cur[0].start, en: cur.map((x) => x.text).join(" ").replace(/\s+([.,!?;:])/g, "$1").trim() });
 
-  const bannerPreviewUrl = value.banner_path
-    ? supabase.storage.from("video-banners").getPublicUrl(value.banner_path as string).data.publicUrl
-    : null;
+    return { lines: lines.map((l) => ({ ...l, ku_sorani: "", ku_badini: "" })) };
+  });
 
-  const onTranscribe = async () => {
-    if (!value.video_path) { toast.error("Upload a video first"); return; }
-    setTranscribing(true);
-    try {
-      const res = await transcribe({ data: { path: value.video_path as string } });
-      set("transcript_json", res.lines);
-      toast.success(`Transcribed ${res.lines.length} lines`);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setTranscribing(false);
-    }
-  };
-  const onTranslate = async (overwrite: boolean) => {
-    const lines = (value.transcript_json as TranscriptLine[]) ?? [];
-    const indices = lines
-      .map((l, i) => ({ l, i }))
-      .filter(({ l }) => l.en?.trim() && (overwrite || (!l.ku_sorani?.trim() && !l.ku_badini?.trim())));
-    if (indices.length === 0) { toast.error("No lines to translate"); return; }
-    setTranslating(true);
-    try {
-      const res = await translateFn({
-        data: {
-          source_language: (value.language_code as "en" | "de" | "ar" | "ko") || "en",
-          lines: indices.map(({ l }) => ({ en: l.en })),
+/* -------------------- AUTO-TRANSLATE TRANSCRIPT -------------------- */
+export const translateTranscriptLines = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      source_language: langEnum,
+      lines: z.array(z.object({ en: z.string() })).min(1).max(400),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Lovable AI is not connected");
+
+    const srcName = { en: "English", de: "German", ar: "Arabic", ko: "Korean" }[data.source_language];
+    const numbered = data.lines.map((l, i) => `${i + 1}. ${l.en}`).join("\n");
+
+    const body = {
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a professional translator for a Kurdish language-learning app. Translate each numbered source line into both Kurdish Sorani (Arabic script) and Kurdish Badini (Kurmanji, Latin script). Keep meaning natural, concise, and matched line-by-line. Return ONLY strict JSON.",
         },
-      });
-      const next = lines.slice();
-      indices.forEach(({ i }, k) => {
-        const tr = res.translations[k];
-        if (!tr) return;
-        next[i] = {
-          ...next[i],
-          ku_sorani: overwrite || !next[i].ku_sorani?.trim() ? tr.sorani : next[i].ku_sorani,
-          ku_badini: overwrite || !next[i].ku_badini?.trim() ? tr.badini : next[i].ku_badini,
-        };
-      });
-      set("transcript_json", next);
-      toast.success(`Translated ${indices.length} line${indices.length === 1 ? "" : "s"}`);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setTranslating(false);
-    }
-  };
-
-
-  return (
-    <div className="grid gap-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div><Label>Language</Label>
-          <Select value={value.language_code as string} onValueChange={(v) => set("language_code", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div><Label>CEFR</Label>
-          <Select value={value.level_cefr as string} onValueChange={(v) => set("level_cefr", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{CEFRS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div><Label>Title</Label><Input value={(value.title ?? "") as string} onChange={(e) => set("title", e.target.value)} /></div>
-      <div><Label>Description</Label><Textarea value={(value.description ?? "") as string} onChange={(e) => set("description", e.target.value)} /></div>
-
-      <div className="rounded-md border p-3 bg-muted/30 grid gap-2">
-        <Label>Banner image</Label>
-        <Input type="file" accept="image/*" disabled={uploadingBanner} onChange={(e) => { const f = e.target.files?.[0]; if (f) onBannerUpload(f); }} />
-        {bannerPreviewUrl ? (
-          <div className="relative aspect-video rounded-md overflow-hidden bg-muted">
-            <img src={bannerPreviewUrl} alt="Banner preview" className="w-full h-full object-cover" />
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">JPG or PNG recommended. Shown on the videos page as the video thumbnail.</p>
-        )}
-        {value.banner_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.banner_path as string}</p> : null}
-        {uploadingBanner && <p className="text-xs">Uploading banner…</p>}
-      </div>
-
-      <div className="rounded-md border p-3 bg-muted/30 grid gap-2">
-        <Label>Video file</Label>
-        <Input type="file" accept="video/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); }} />
-        {value.video_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.video_path as string}</p> : <p className="text-xs text-muted-foreground">MP4 recommended. Uploads go to the private videos bucket.</p>}
-        {uploading && <p className="text-xs">Uploading…</p>}
-        <div className="flex gap-2 mt-1 flex-wrap">
-          <Button type="button" size="sm" variant="secondary" onClick={onTranscribe} disabled={!value.video_path || transcribing}>
-            {transcribing ? "Transcribing…" : "Auto-transcribe (ElevenLabs)"}
-          </Button>
-          <Button type="button" size="sm" variant="secondary" onClick={() => onTranslate(false)} disabled={translating || !((value.transcript_json as TranscriptLine[])?.length)}>
-            {translating ? "Translating…" : "Auto-translate empty → Kurdish"}
-          </Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => onTranslate(true)} disabled={translating || !((value.transcript_json as TranscriptLine[])?.length)}>
-            {translating ? "Translating…" : "Retranslate all"}
-          </Button>
-        </div>
-      </div>
-
-      <TranscriptEditor
-        value={(value.transcript_json as TranscriptLine[]) ?? []}
-        onChange={(lines) => set("transcript_json", lines)}
-        sourceLanguage={(value.language_code as string) || "en"}
-      />
-    </div>
-  );
-}
-
-interface WordHighlight {
-  id: string;
-  start_index: number;
-  end_index: number;
-  word: string;
-  part_of_speech: string;
-  meaning_en: string;
-  meaning_ku_sorani: string;
-  meaning_ku_badini: string;
-}
-
-interface TranscriptLine { t?: number; en: string; ku_sorani?: string; ku_badini?: string; highlights?: WordHighlight[] }
-
-const POS_OPTIONS = ["noun", "verb", "adjective", "adverb", "phrase", "other"] as const;
-
-function tokenizeWords(text: string): string[] {
-  return (text || "").split(/\s+/).filter(Boolean);
-}
-
-/**
- * Lets an admin click (or shift-click to select a phrase) on words inside a
- * transcript line's English text, then attach a part-of-speech + English/Kurdish
- * meaning to that word or phrase. Saved highlights are stored on the line itself
- * (`line.highlights`) inside the existing transcript_json column — no new table
- * needed. Learners see these as clickable highlighted words on the video page.
- */
-function LineHighlighter({ line, onChange, sourceLanguage }: { line: TranscriptLine; onChange: (highlights: WordHighlight[]) => void; sourceLanguage: string }) {
-  const { t } = useDialect();
-  const words = tokenizeWords(line.en);
-  const highlights = line.highlights ?? [];
-  const generateFn = useServerFn(generateWordMeaning);
-  const [generating, setGenerating] = useState(false);
-  const [form, setForm] = useState<null | {
-    mode: "create" | "edit";
-    id?: string;
-    start_index: number;
-    end_index: number;
-    word: string;
-    part_of_speech: string;
-    meaning_en: string;
-    meaning_ku_sorani: string;
-    meaning_ku_badini: string;
-  }>(null);
-
-  const onGenerate = async () => {
-    if (!form) return;
-    const word = form.word.trim();
-    if (!word) { toast.error("Select a word first"); return; }
-    setGenerating(true);
-    try {
-      const res = await generateFn({
-        data: { source_language: sourceLanguage as never, word, context: line.en },
-      });
-      setForm((f) => f && {
-        ...f,
-        part_of_speech: res.part_of_speech,
-        meaning_en: res.meaning_en || f.meaning_en,
-        meaning_ku_sorani: res.meaning_ku_sorani || f.meaning_ku_sorani,
-        meaning_ku_badini: res.meaning_ku_badini || f.meaning_ku_badini,
-      });
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const findHighlightAt = (i: number) => highlights.find((h) => i >= h.start_index && i <= h.end_index);
-
-  const handleWordClick = (i: number, shiftKey: boolean) => {
-    if (shiftKey && form?.mode === "create") {
-      const start = Math.min(form.start_index, i);
-      const end = Math.max(form.end_index, i);
-      setForm({ ...form, start_index: start, end_index: end, word: words.slice(start, end + 1).join(" ") });
-      return;
-    }
-    const existing = findHighlightAt(i);
-    if (existing) {
-      setForm({
-        mode: "edit",
-        id: existing.id,
-        start_index: existing.start_index,
-        end_index: existing.end_index,
-        word: existing.word,
-        part_of_speech: existing.part_of_speech,
-        meaning_en: existing.meaning_en,
-        meaning_ku_sorani: existing.meaning_ku_sorani,
-        meaning_ku_badini: existing.meaning_ku_badini,
-      });
-      return;
-    }
-    setForm({
-      mode: "create",
-      start_index: i,
-      end_index: i,
-      word: words[i],
-      part_of_speech: "noun",
-      meaning_en: "",
-      meaning_ku_sorani: "",
-      meaning_ku_badini: "",
-    });
-  };
-
-  const saveForm = () => {
-    if (!form) return;
-    const word = form.word.trim();
-    if (!word) { toast.error("Select a word first"); return; }
-    const id = form.mode === "edit" && form.id ? form.id : crypto.randomUUID();
-    const next: WordHighlight = {
-      id,
-      start_index: form.start_index,
-      end_index: form.end_index,
-      word,
-      part_of_speech: form.part_of_speech,
-      meaning_en: form.meaning_en.trim(),
-      meaning_ku_sorani: form.meaning_ku_sorani.trim(),
-      meaning_ku_badini: form.meaning_ku_badini.trim(),
-    };
-    // drop any prior highlight with the same id, and any others that would overlap the new range
-    const withoutOverlap = highlights.filter(
-      (h) => h.id !== id && (h.end_index < next.start_index || h.start_index > next.end_index),
-    );
-    onChange([...withoutOverlap, next].sort((a, b) => a.start_index - b.start_index));
-    setForm(null);
-  };
-
-  const deleteForm = () => {
-    if (!form?.id) return;
-    onChange(highlights.filter((h) => h.id !== form.id));
-    setForm(null);
-  };
-
-  if (words.length === 0) return null;
-
-  return (
-    <div className="rounded-md border border-dashed p-3 bg-background/50 grid gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <Label className="text-xs">{t("highlighted_words")}</Label>
-        {highlights.length === 0 && <span className="text-[11px] text-muted-foreground">{t("no_highlights")}</span>}
-      </div>
-      <p className="text-[11px] text-muted-foreground">{t("highlight_hint")}</p>
-      <div dir="ltr" className="text-sm leading-8">
-        {words.map((w, i) => {
-          const hl = findHighlightAt(i);
-          const pending = form?.mode === "create" && i >= form.start_index && i <= form.end_index;
-          return (
-            <span
-              key={i}
-              onClick={(e) => handleWordClick(i, e.shiftKey)}
-              className={cn(
-                "cursor-pointer rounded px-0.5 py-0.5 mr-1 inline-block select-none",
-                hl && "bg-amber-300/60 dark:bg-amber-500/30 underline decoration-dotted",
-                pending && !hl && "bg-primary/25",
-                !hl && !pending && "hover:bg-muted",
-              )}
-              title={hl?.meaning_en || undefined}
-            >
-              {w}
-            </span>
-          );
-        })}
-      </div>
-      {form && (
-        <div className="rounded-md border p-3 grid gap-2 bg-muted/40">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-xs text-muted-foreground">
-              {t("selected_word")}: <span className="font-medium text-foreground" dir="ltr">{form.word}</span>
-            </div>
-            <Button type="button" size="sm" variant="secondary" onClick={onGenerate} disabled={generating}>
-              {generating ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
-              {generating ? t("generating") : t("generate")}
-            </Button>
-          </div>
-          <div>
-            <Label className="text-xs">{t("part_of_speech")}</Label>
-            <Select value={form.part_of_speech} onValueChange={(v) => setForm({ ...form, part_of_speech: v })}>
-              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {POS_OPTIONS.map((p) => (
-                  <SelectItem key={p} value={p}>{t(`pos_${p}` as never)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">{t("meaning_english")}</Label>
-            <Input
-              className="h-8"
-              dir="ltr"
-              value={form.meaning_en}
-              onChange={(e) => setForm({ ...form, meaning_en: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">{t("meaning_kurdish")} · {t("sorani")}</Label>
-              <Input
-                className="h-8"
-                value={form.meaning_ku_sorani}
-                onChange={(e) => setForm({ ...form, meaning_ku_sorani: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">{t("meaning_kurdish")} · {t("badini")}</Label>
-              <Input
-                className="h-8"
-                value={form.meaning_ku_badini}
-                onChange={(e) => setForm({ ...form, meaning_ku_badini: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 justify-end">
-            {form.mode === "edit" && (
-              <Button type="button" size="sm" variant="destructive" onClick={deleteForm}>{t("remove_highlight")}</Button>
-            )}
-            <Button type="button" size="sm" variant="outline" onClick={() => setForm(null)}>{t("cancel")}</Button>
-            <Button type="button" size="sm" onClick={saveForm}>{t("save_highlight")}</Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function TranscriptEditor({ value, onChange, sourceLanguage }: { value: TranscriptLine[]; onChange: (v: TranscriptLine[]) => void; sourceLanguage: string }) {
-  const update = (i: number, patch: Partial<TranscriptLine>) => {
-    const next = value.slice();
-    next[i] = { ...next[i], ...patch };
-    onChange(next);
-  };
-  const add = () => onChange([...value, { en: "", ku_sorani: "", ku_badini: "" }]);
-  const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i));
-  return (
-    <div className="grid gap-2">
-      <div className="flex items-center justify-between">
-        <Label>Transcript lines</Label>
-        <Button type="button" size="sm" variant="outline" onClick={add}>+ Add line</Button>
-      </div>
-      {value.length === 0 && <p className="text-xs text-muted-foreground">No lines yet. Click "Add line" to start.</p>}
-      {value.map((line, i) => (
-        <div key={i} className="rounded-md border p-3 grid gap-2 bg-muted/30">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-muted-foreground">Line {i + 1}</span>
-            <Input type="number" step="0.1" className="w-24 h-7" placeholder="t (s)" value={line.t ?? 0} onChange={(e) => update(i, { t: Number(e.target.value) })} />
-            <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>✕</Button>
-          </div>
-          <Input placeholder="English line" dir="ltr" value={line.en} onChange={(e) => update(i, { en: e.target.value })} />
-          <LineHighlighter line={line} onChange={(highlights) => update(i, { highlights })} sourceLanguage={sourceLanguage} />
-          <Input placeholder="Kurdish (Sorani) translation" value={line.ku_sorani ?? ""} onChange={(e) => update(i, { ku_sorani: e.target.value })} />
-          <Input placeholder="Kurdish (Badini) translation" value={line.ku_badini ?? ""} onChange={(e) => update(i, { ku_badini: e.target.value })} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-interface BookParagraph { text: string; ku_sorani?: string; ku_badini?: string; highlights?: WordHighlight[] }
-
-function BooksTab() {
-  const { t } = useDialect();
-  const qc = useQueryClient();
-  const [lang, setLang] = useState("en");
-  const list = useServerFn(adminListBooks);
-  const upsert = useServerFn(adminUpsertBook);
-  const del = useServerFn(adminDeleteBook);
-  const q = useQuery({ queryKey: ["admin-books", lang], queryFn: () => list({ data: { language: lang as never } }) });
-  const [editing, setEditing] = useState<null | Record<string, unknown>>(null);
-  const [open, setOpen] = useState(false);
-
-  const save = useMutation({
-    mutationFn: async (payload: Record<string, unknown>) => upsert({ data: payload as never }),
-    onSuccess: () => { toast.success(t("saved")); qc.invalidateQueries({ queryKey: ["admin-books"] }); setOpen(false); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const remove = useMutation({
-    mutationFn: async (id: string) => del({ data: { id } }),
-    onSuccess: () => { toast.success(t("deleted")); qc.invalidateQueries({ queryKey: ["admin-books"] }); },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <div>
-      <div className="flex gap-2 mb-4 items-center">
-        <Select value={lang} onValueChange={setLang}>
-          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-          <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
-        </Select>
-        <div className="flex-1" />
-        <Button onClick={() => { setEditing({ language_code: lang, level_cefr: "A1", title: "", author: "", description: "", cover_path: "", content_json: [] }); setOpen(true); }}>{t("add_new")}</Button>
-      </div>
-      <div className="grid gap-2">
-        {(q.data?.books ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
-        {(q.data?.books ?? []).map((b) => (
-          <Card key={b.id}>
-            <CardContent className="p-3 flex justify-between items-center">
-              <div>
-                <div className="font-medium">{b.title}</div>
-                <div className="text-xs text-muted-foreground">{b.level_cefr} · {b.author || "no author"}</div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => { setEditing(b as unknown as Record<string, unknown>); setOpen(true); }}>{t("edit")}</Button>
-                <Button variant="destructive" size="sm" onClick={() => { if (confirm(t("confirm_delete"))) remove.mutate(b.id); }}>{t("delete")}</Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{t("admin_books")}</DialogTitle></DialogHeader>
-          {editing && <BookForm value={editing} onChange={setEditing} />}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-            <Button onClick={() => editing && save.mutate(editing)} disabled={save.isPending}>{t("save")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function BookForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
-  const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
-  const [uploadingCover, setUploadingCover] = useState(false);
-  const [translating, setTranslating] = useState(false);
-  const translateFn = useServerFn(translateTranscriptLines);
-
-  const onCoverUpload = async (file: File) => {
-    setUploadingCover(true);
-    try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${(value.language_code as string) || "en"}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("book-covers").upload(path, file, { upsert: false, contentType: file.type });
-      if (error) throw error;
-      set("cover_path", path);
-      toast.success("Cover uploaded");
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setUploadingCover(false);
-    }
-  };
-
-  const coverPreviewUrl = value.cover_path
-    ? supabase.storage.from("book-covers").getPublicUrl(value.cover_path as string).data.publicUrl
-    : null;
-
-  const onTranslate = async (overwrite: boolean) => {
-    const paragraphs = (value.content_json as BookParagraph[]) ?? [];
-    const indices = paragraphs
-      .map((p, i) => ({ p, i }))
-      .filter(({ p }) => p.text?.trim() && (overwrite || (!p.ku_sorani?.trim() && !p.ku_badini?.trim())));
-    if (indices.length === 0) { toast.error("No paragraphs to translate"); return; }
-    setTranslating(true);
-    try {
-      const res = await translateFn({
-        data: {
-          source_language: (value.language_code as "en" | "de" | "ar" | "ko") || "en",
-          lines: indices.map(({ p }) => ({ en: p.text })),
+        {
+          role: "user",
+          content: `Source language: ${srcName}. Translate every line. Return JSON of shape {"translations":[{"i":1,"sorani":"...","badini":"..."}, ...]} with the SAME count and order as input.\n\nLines:\n${numbered}`,
         },
-      });
-      const next = paragraphs.slice();
-      indices.forEach(({ i }, k) => {
-        const tr = res.translations[k];
-        if (!tr) return;
-        next[i] = {
-          ...next[i],
-          ku_sorani: overwrite || !next[i].ku_sorani?.trim() ? tr.sorani : next[i].ku_sorani,
-          ku_badini: overwrite || !next[i].ku_badini?.trim() ? tr.badini : next[i].ku_badini,
-        };
-      });
-      set("content_json", next);
-      toast.success(`Translated ${indices.length} paragraph${indices.length === 1 ? "" : "s"}`);
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setTranslating(false);
-    }
-  };
-
-  return (
-    <div className="grid gap-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        <div><Label>Language</Label>
-          <Select value={value.language_code as string} onValueChange={(v) => set("language_code", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{LANGS.map((l) => <SelectItem key={l} value={l}>{l.toUpperCase()}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-        <div><Label>CEFR</Label>
-          <Select value={value.level_cefr as string} onValueChange={(v) => set("level_cefr", v)}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>{CEFRS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div><Label>Title</Label><Input value={(value.title ?? "") as string} onChange={(e) => set("title", e.target.value)} /></div>
-      <div><Label>Author</Label><Input value={(value.author ?? "") as string} onChange={(e) => set("author", e.target.value)} /></div>
-      <div><Label>Description</Label><Textarea value={(value.description ?? "") as string} onChange={(e) => set("description", e.target.value)} /></div>
-
-      <div className="rounded-md border p-3 bg-muted/30 grid gap-2">
-        <Label>Cover image</Label>
-        <Input type="file" accept="image/*" disabled={uploadingCover} onChange={(e) => { const f = e.target.files?.[0]; if (f) onCoverUpload(f); }} />
-        {coverPreviewUrl ? (
-          <div className="relative aspect-[3/4] w-32 rounded-md overflow-hidden bg-muted">
-            <img src={coverPreviewUrl} alt="Cover preview" className="w-full h-full object-cover" />
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">JPG or PNG recommended. Shown on the books page as the cover thumbnail.</p>
-        )}
-        {value.cover_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.cover_path as string}</p> : null}
-        {uploadingCover && <p className="text-xs">Uploading cover…</p>}
-      </div>
-
-      <div className="rounded-md border p-3 bg-muted/30 grid gap-2">
-        <Label>Translate</Label>
-        <p className="text-xs text-muted-foreground">Add paragraphs below (the transcribed text of the book), then use these to auto-translate into Kurdish.</p>
-        <div className="flex gap-2 mt-1 flex-wrap">
-          <Button type="button" size="sm" variant="secondary" onClick={() => onTranslate(false)} disabled={translating || !((value.content_json as BookParagraph[])?.length)}>
-            {translating ? "Translating…" : "Auto-translate empty → Kurdish"}
-          </Button>
-          <Button type="button" size="sm" variant="outline" onClick={() => onTranslate(true)} disabled={translating || !((value.content_json as BookParagraph[])?.length)}>
-            {translating ? "Translating…" : "Retranslate all"}
-          </Button>
-        </div>
-      </div>
-
-      <BookParagraphEditor
-        value={(value.content_json as BookParagraph[]) ?? []}
-        onChange={(paragraphs) => set("content_json", paragraphs)}
-        sourceLanguage={(value.language_code as string) || "en"}
-      />
-    </div>
-  );
-}
-
-/**
- * Same click-a-word-to-tag-its-meaning tool as LineHighlighter (used for
- * video transcript lines), adapted to a book paragraph's `.text` field.
- * Duplicated rather than shared since the two source objects (TranscriptLine
- * vs BookParagraph) have different shapes and this file already keeps each
- * content type's editor self-contained.
- */
-function ParagraphHighlighter({ paragraph, onChange, sourceLanguage }: { paragraph: BookParagraph; onChange: (highlights: WordHighlight[]) => void; sourceLanguage: string }) {
-  const { t } = useDialect();
-  const words = tokenizeWords(paragraph.text);
-  const highlights = paragraph.highlights ?? [];
-  const generateFn = useServerFn(generateWordMeaning);
-  const [generating, setGenerating] = useState(false);
-  const [form, setForm] = useState<null | {
-    mode: "create" | "edit";
-    id?: string;
-    start_index: number;
-    end_index: number;
-    word: string;
-    part_of_speech: string;
-    meaning_en: string;
-    meaning_ku_sorani: string;
-    meaning_ku_badini: string;
-  }>(null);
-
-  const onGenerate = async () => {
-    if (!form) return;
-    const word = form.word.trim();
-    if (!word) { toast.error("Select a word first"); return; }
-    setGenerating(true);
-    try {
-      const res = await generateFn({
-        data: { source_language: sourceLanguage as never, word, context: paragraph.text },
-      });
-      setForm((f) => f && {
-        ...f,
-        part_of_speech: res.part_of_speech,
-        meaning_en: res.meaning_en || f.meaning_en,
-        meaning_ku_sorani: res.meaning_ku_sorani || f.meaning_ku_sorani,
-        meaning_ku_badini: res.meaning_ku_badini || f.meaning_ku_badini,
-      });
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const findHighlightAt = (i: number) => highlights.find((h) => i >= h.start_index && i <= h.end_index);
-
-  const handleWordClick = (i: number, shiftKey: boolean) => {
-    if (shiftKey && form?.mode === "create") {
-      const start = Math.min(form.start_index, i);
-      const end = Math.max(form.end_index, i);
-      setForm({ ...form, start_index: start, end_index: end, word: words.slice(start, end + 1).join(" ") });
-      return;
-    }
-    const existing = findHighlightAt(i);
-    if (existing) {
-      setForm({
-        mode: "edit",
-        id: existing.id,
-        start_index: existing.start_index,
-        end_index: existing.end_index,
-        word: existing.word,
-        part_of_speech: existing.part_of_speech,
-        meaning_en: existing.meaning_en,
-        meaning_ku_sorani: existing.meaning_ku_sorani,
-        meaning_ku_badini: existing.meaning_ku_badini,
-      });
-      return;
-    }
-    setForm({
-      mode: "create",
-      start_index: i,
-      end_index: i,
-      word: words[i],
-      part_of_speech: "noun",
-      meaning_en: "",
-      meaning_ku_sorani: "",
-      meaning_ku_badini: "",
-    });
-  };
-
-  const saveForm = () => {
-    if (!form) return;
-    const word = form.word.trim();
-    if (!word) { toast.error("Select a word first"); return; }
-    const id = form.mode === "edit" && form.id ? form.id : crypto.randomUUID();
-    const next: WordHighlight = {
-      id,
-      start_index: form.start_index,
-      end_index: form.end_index,
-      word,
-      part_of_speech: form.part_of_speech,
-      meaning_en: form.meaning_en.trim(),
-      meaning_ku_sorani: form.meaning_ku_sorani.trim(),
-      meaning_ku_badini: form.meaning_ku_badini.trim(),
+      ],
+      response_format: { type: "json_object" },
     };
-    const withoutOverlap = highlights.filter(
-      (h) => h.id !== id && (h.end_index < next.start_index || h.start_index > next.end_index),
-    );
-    onChange([...withoutOverlap, next].sort((a, b) => a.start_index - b.start_index));
-    setForm(null);
-  };
 
-  const deleteForm = () => {
-    if (!form?.id) return;
-    onChange(highlights.filter((h) => h.id !== form.id));
-    setForm(null);
-  };
-
-  if (words.length === 0) return null;
-
-  return (
-    <div className="rounded-md border border-dashed p-3 bg-background/50 grid gap-2">
-      <div className="flex items-center justify-between gap-2">
-        <Label className="text-xs">{t("highlighted_words")}</Label>
-        {highlights.length === 0 && <span className="text-[11px] text-muted-foreground">{t("no_highlights")}</span>}
-      </div>
-      <p className="text-[11px] text-muted-foreground">{t("highlight_hint")}</p>
-      <div dir="ltr" className="text-sm leading-8">
-        {words.map((w, i) => {
-          const hl = findHighlightAt(i);
-          const pending = form?.mode === "create" && i >= form.start_index && i <= form.end_index;
-          return (
-            <span
-              key={i}
-              onClick={(e) => handleWordClick(i, e.shiftKey)}
-              className={cn(
-                "cursor-pointer rounded px-0.5 py-0.5 mr-1 inline-block select-none",
-                hl && "bg-amber-300/60 dark:bg-amber-500/30 underline decoration-dotted",
-                pending && !hl && "bg-primary/25",
-                !hl && !pending && "hover:bg-muted",
-              )}
-              title={hl?.meaning_en || undefined}
-            >
-              {w}
-            </span>
-          );
-        })}
-      </div>
-      {form && (
-        <div className="rounded-md border p-3 grid gap-2 bg-muted/40">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-xs text-muted-foreground">
-              {t("selected_word")}: <span className="font-medium text-foreground" dir="ltr">{form.word}</span>
-            </div>
-            <Button type="button" size="sm" variant="secondary" onClick={onGenerate} disabled={generating}>
-              {generating ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
-              {generating ? t("generating") : t("generate")}
-            </Button>
-          </div>
-          <div>
-            <Label className="text-xs">{t("part_of_speech")}</Label>
-            <Select value={form.part_of_speech} onValueChange={(v) => setForm({ ...form, part_of_speech: v })}>
-              <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {POS_OPTIONS.map((p) => (
-                  <SelectItem key={p} value={p}>{t(`pos_${p}` as never)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">{t("meaning_english")}</Label>
-            <Input
-              className="h-8"
-              dir="ltr"
-              value={form.meaning_en}
-              onChange={(e) => setForm({ ...form, meaning_en: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div>
-              <Label className="text-xs">{t("meaning_kurdish")} · {t("sorani")}</Label>
-              <Input
-                className="h-8"
-                value={form.meaning_ku_sorani}
-                onChange={(e) => setForm({ ...form, meaning_ku_sorani: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label className="text-xs">{t("meaning_kurdish")} · {t("badini")}</Label>
-              <Input
-                className="h-8"
-                value={form.meaning_ku_badini}
-                onChange={(e) => setForm({ ...form, meaning_ku_badini: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 justify-end">
-            {form.mode === "edit" && (
-              <Button type="button" size="sm" variant="destructive" onClick={deleteForm}>{t("remove_highlight")}</Button>
-            )}
-            <Button type="button" size="sm" variant="outline" onClick={() => setForm(null)}>{t("cancel")}</Button>
-            <Button type="button" size="sm" onClick={saveForm}>{t("save_highlight")}</Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function BookParagraphEditor({ value, onChange, sourceLanguage }: { value: BookParagraph[]; onChange: (v: BookParagraph[]) => void; sourceLanguage: string }) {
-  const update = (i: number, patch: Partial<BookParagraph>) => {
-    const next = value.slice();
-    next[i] = { ...next[i], ...patch };
-    onChange(next);
-  };
-  const add = () => onChange([...value, { text: "", ku_sorani: "", ku_badini: "" }]);
-  const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i));
-  return (
-    <div className="grid gap-2">
-      <div className="flex items-center justify-between">
-        <Label>Paragraphs</Label>
-        <Button type="button" size="sm" variant="outline" onClick={add}>+ Add paragraph</Button>
-      </div>
-      {value.length === 0 && <p className="text-xs text-muted-foreground">No paragraphs yet. Click "Add paragraph" to start.</p>}
-      {value.map((p, i) => (
-        <div key={i} className="rounded-md border p-3 grid gap-2 bg-muted/30">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs text-muted-foreground">Paragraph {i + 1}</span>
-            <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>✕</Button>
-          </div>
-          <Textarea placeholder="Paragraph text" dir="ltr" value={p.text} onChange={(e) => update(i, { text: e.target.value })} />
-          <ParagraphHighlighter paragraph={p} onChange={(highlights) => update(i, { highlights })} sourceLanguage={sourceLanguage} />
-          <Input placeholder="Kurdish (Sorani) translation" value={p.ku_sorani ?? ""} onChange={(e) => update(i, { ku_sorani: e.target.value })} />
-          <Input placeholder="Kurdish (Badini) translation" value={p.ku_badini ?? ""} onChange={(e) => update(i, { ku_badini: e.target.value })} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function UsersTab() {
-  const { t } = useDialect();
-  const qc = useQueryClient();
-  const list = useServerFn(adminListUsers);
-  const setRole = useServerFn(adminSetUserRole);
-  const q = useQuery({ queryKey: ["admin-users"], queryFn: () => list({}) });
-  const m = useMutation({
-    mutationFn: async (args: { user_id: string; grant: boolean }) => setRole({ data: { user_id: args.user_id, role: "admin", grant: args.grant } }),
-    onSuccess: () => { toast.success(t("saved")); qc.invalidateQueries({ queryKey: ["admin-users"] }); },
-    onError: (e: Error) => toast.error(e.message),
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      if (res.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
+      if (res.status === 402) throw new Error("AI credits exhausted. Add credits in your workspace.");
+      throw new Error(`Translation failed [${res.status}]: ${t}`);
+    }
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const content = json.choices?.[0]?.message?.content ?? "{}";
+    let parsed: { translations?: Array<{ i?: number; sorani?: string; badini?: string }> } = {};
+    try { parsed = JSON.parse(content); } catch { throw new Error("AI returned invalid JSON"); }
+    const translations = parsed.translations ?? [];
+    const byIdx = new Map<number, { sorani: string; badini: string }>();
+    for (const t of translations) {
+      if (typeof t.i === "number") byIdx.set(t.i, { sorani: t.sorani ?? "", badini: t.badini ?? "" });
+    }
+    const out = data.lines.map((_, i) => byIdx.get(i + 1) ?? { sorani: "", badini: "" });
+    return { translations: out };
   });
-  return (
-    <div className="grid gap-2">
-      {(q.data?.users ?? []).length === 0 && <p className="text-muted-foreground">{t("no_data")}</p>}
-      {(q.data?.users ?? []).map((u) => {
-        const isAdmin = u.roles.includes("admin");
-        return (
-          <Card key={u.id}>
-            <CardContent className="p-3 flex justify-between items-center">
-              <div>
-                <div className="font-medium">{u.display_name ?? "—"}</div>
-                <div className="text-xs text-muted-foreground">{u.id.slice(0, 8)} · {u.ui_dialect}</div>
-                <div className="mt-1 flex gap-1">{u.roles.map((r) => <Badge key={r} variant="secondary">{r}</Badge>)}</div>
-              </div>
-              <Button variant={isAdmin ? "destructive" : "default"} size="sm" onClick={() => m.mutate({ user_id: u.id, grant: !isAdmin })}>
-                {isAdmin ? t("revoke_admin") : t("promote_admin")}
-              </Button>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
 
-// suppress unused import warnings
-export { getIsAdmin, DialogTrigger, CardHeader, CardTitle };
+/* -------------------- AI: GENERATE WORD MEANING (for highlight tool) -------------------- */
+const posEnum = z.enum(["noun", "verb", "adjective", "adverb", "phrase", "other"]);
+
+export const generateWordMeaning = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      source_language: langEnum,
+      word: z.string().min(1).max(200),
+      context: z.string().max(2000).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) throw new Error("Lovable AI is not connected");
+
+    const srcName = { en: "English", de: "German", ar: "Arabic", ko: "Korean" }[data.source_language];
+
+    const body = {
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a lexicographer for a Kurdish language-learning app. Given a word or short phrase highlighted inside a sentence, identify its part of speech AS USED IN THAT SENTENCE, give a short dictionary-style meaning in English, and translate that meaning into Kurdish Sorani (Arabic script) and Kurdish Badini (Kurmanji, Arabic script). Keep meanings brief (a few words, not a full sentence). Return ONLY strict JSON.",
+        },
+        {
+          role: "user",
+          content: `Source language: ${srcName}.\nSentence: ${data.context?.trim() || "(none)"}\nHighlighted word/phrase: "${data.word}"\n\nReturn JSON of shape {"part_of_speech":"noun|verb|adjective|adverb|phrase|other","meaning_en":"...","meaning_ku_sorani":"...","meaning_ku_badini":"..."}.`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    };
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Lovable-API-Key": key },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const t = await res.text();
+      if (res.status === 429) throw new Error("AI rate limit reached. Try again shortly.");
+      if (res.status === 402) throw new Error("AI credits exhausted. Add credits in your workspace.");
+      throw new Error(`Generation failed [${res.status}]: ${t}`);
+    }
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const content = json.choices?.[0]?.message?.content ?? "{}";
+    let parsed: { part_of_speech?: string; meaning_en?: string; meaning_ku_sorani?: string; meaning_ku_badini?: string } = {};
+    try { parsed = JSON.parse(content); } catch { throw new Error("AI returned invalid JSON"); }
+    const pos = posEnum.safeParse(parsed.part_of_speech);
+    return {
+      part_of_speech: pos.success ? pos.data : "other",
+      meaning_en: (parsed.meaning_en ?? "").trim(),
+      meaning_ku_sorani: (parsed.meaning_ku_sorani ?? "").trim(),
+      meaning_ku_badini: (parsed.meaning_ku_badini ?? "").trim(),
+    };
+  });
+
+export const adminDeleteVideo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("videos").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminDeleteBook = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("books").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const adminSetUserRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ user_id: z.string().uuid(), role: z.enum(["admin", "user"]), grant: z.boolean() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    const { error } = await context.supabase.rpc("admin_set_user_role", {
+      _target_user_id: data.user_id,
+      _role: data.role,
+      _grant: data.grant,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/* -------------------- ELEVENLABS -------------------- */
+export const getElevenLabsToken = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ agentId: z.string().min(1).max(100) }).parse(d))
+  .handler(async ({ data }) => {
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) throw new Error("ElevenLabs is not connected");
+    const res = await fetch(
+      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${encodeURIComponent(data.agentId)}`,
+      { headers: { "xi-api-key": apiKey } },
+    );
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`ElevenLabs token error [${res.status}]: ${body}`);
+    }
+    const json = (await res.json()) as { token: string };
+    return { token: json.token };
+  });
