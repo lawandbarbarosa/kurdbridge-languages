@@ -43,12 +43,12 @@ function Videos() {
         {(data?.videos ?? []).length === 0 ? (
           <p className="text-muted-foreground">{t("no_words")}</p>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {(data?.videos ?? []).map((v) => {
               const thumbnail = getVideoThumbnail(v.banner_path, v.youtube_id);
               return (
               <Link key={v.id} to={`/video/${v.id}`} className="bento-card overflow-hidden group hover:scale-[1.02] transition-transform">
-                <div className="relative aspect-[2/3] bg-muted">
+                <div className="relative aspect-video bg-muted">
                   {thumbnail ? (
                     <img
                       src={thumbnail}
@@ -61,11 +61,10 @@ function Videos() {
                       <PlayCircle className="h-10 w-10 text-muted-foreground/50" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors grid place-items-center">
-                    <PlayCircle className="h-12 w-12 text-white drop-shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors grid place-items-center">
+                    <PlayCircle className="h-14 w-14 text-white drop-shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                  <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent pointer-events-none" />
-                  <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-background/90 text-xs font-bold">{v.level_cefr}</div>
+                  <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-white text-xs font-bold">{v.level_cefr}</div>
                 </div>
                 <div className="p-4">
                   <div className="font-display font-semibold line-clamp-2" dir="ltr">{v.title}</div>
