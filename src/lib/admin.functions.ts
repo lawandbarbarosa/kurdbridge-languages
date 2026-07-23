@@ -252,6 +252,24 @@ export const adminDeleteVocab = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Existing rows loaded straight from Supabase can have `null` in any nullable text
+// column (e.g. an untouched `description`, or a transcript line whose Kurdish
+// translation was never filled in). z.string().optional() only tolerates a MISSING
+// key (undefined), not an explicit null, so re-saving such a row used to throw
+// "Expected string, received null". These helpers accept null too and normalize it
+// to a plain string so the rest of the app (which always expects a string) is safe.
+const nullableStr = (max: number) => z.string().max(max).nullish().transform((v) => v ?? "");
+const highlightSchema = z.object({
+  id: z.string().max(100),
+  start_index: z.number().int().min(0),
+  end_index: z.number().int().min(0),
+  word: z.string().min(1).max(200),
+  part_of_speech: z.string().max(50).nullish().transform((v) => v || "other"),
+  meaning_en: nullableStr(500),
+  meaning_ku_sorani: nullableStr(500),
+  meaning_ku_badini: nullableStr(500),
+});
+
 export const adminUpsertVideo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -263,23 +281,14 @@ export const adminUpsertVideo = createServerFn({ method: "POST" })
       video_path: z.string().max(500).optional().nullable(),
       banner_path: z.string().max(500).optional().nullable(),
       title: z.string().min(1).max(300),
-      description: z.string().max(2000).optional(),
+      description: z.string().max(2000).optional().nullable(),
       duration_seconds: z.number().int().min(0).nullable().optional(),
       transcript_json: z.array(z.object({
         t: z.number().optional(),
         en: z.string(),
-        ku_sorani: z.string().optional(),
-        ku_badini: z.string().optional(),
-        highlights: z.array(z.object({
-          id: z.string().max(100),
-          start_index: z.number().int().min(0),
-          end_index: z.number().int().min(0),
-          word: z.string().min(1).max(200),
-          part_of_speech: z.string().max(50).default("other"),
-          meaning_en: z.string().max(500).default(""),
-          meaning_ku_sorani: z.string().max(500).default(""),
-          meaning_ku_badini: z.string().max(500).default(""),
-        })).optional().default([]),
+        ku_sorani: z.string().optional().nullable(),
+        ku_badini: z.string().optional().nullable(),
+        highlights: z.array(highlightSchema).optional().default([]),
       })).default([]),
     }).parse(d),
   )
@@ -293,18 +302,9 @@ export const adminUpsertVideo = createServerFn({ method: "POST" })
 
 const bookParagraphSchema = z.object({
   text: z.string(),
-  ku_sorani: z.string().optional(),
-  ku_badini: z.string().optional(),
-  highlights: z.array(z.object({
-    id: z.string().max(100),
-    start_index: z.number().int().min(0),
-    end_index: z.number().int().min(0),
-    word: z.string().min(1).max(200),
-    part_of_speech: z.string().max(50).default("other"),
-    meaning_en: z.string().max(500).default(""),
-    meaning_ku_sorani: z.string().max(500).default(""),
-    meaning_ku_badini: z.string().max(500).default(""),
-  })).optional().default([]),
+  ku_sorani: z.string().optional().nullable(),
+  ku_badini: z.string().optional().nullable(),
+  highlights: z.array(highlightSchema).optional().default([]),
 });
 
 export const adminUpsertBook = createServerFn({ method: "POST" })
@@ -316,7 +316,7 @@ export const adminUpsertBook = createServerFn({ method: "POST" })
       level_cefr: cefrEnum,
       title: z.string().min(1).max(300),
       author: z.string().max(200).optional().nullable(),
-      description: z.string().max(2000).optional(),
+      description: z.string().max(2000).optional().nullable(),
       cover_path: z.string().max(500).optional().nullable(),
       content_json: z.array(bookParagraphSchema).default([]),
     }).parse(d),
