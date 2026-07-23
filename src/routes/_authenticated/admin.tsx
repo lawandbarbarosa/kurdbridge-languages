@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useDialect } from "@/hooks/use-dialect";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ import {
   adminSetUserRole,
   transcribeVideoFile,
   translateTranscriptLines,
+  generateWordMeaning,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -600,6 +602,7 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
       <TranscriptEditor
         value={(value.transcript_json as TranscriptLine[]) ?? []}
         onChange={(lines) => set("transcript_json", lines)}
+        sourceLanguage={(value.language_code as string) || "en"}
       />
     </div>
   );
@@ -631,10 +634,12 @@ function tokenizeWords(text: string): string[] {
  * (`line.highlights`) inside the existing transcript_json column — no new table
  * needed. Learners see these as clickable highlighted words on the video page.
  */
-function LineHighlighter({ line, onChange }: { line: TranscriptLine; onChange: (highlights: WordHighlight[]) => void }) {
+function LineHighlighter({ line, onChange, sourceLanguage }: { line: TranscriptLine; onChange: (highlights: WordHighlight[]) => void; sourceLanguage: string }) {
   const { t } = useDialect();
   const words = tokenizeWords(line.en);
   const highlights = line.highlights ?? [];
+  const generateFn = useServerFn(generateWordMeaning);
+  const [generating, setGenerating] = useState(false);
   const [form, setForm] = useState<null | {
     mode: "create" | "edit";
     id?: string;
@@ -646,6 +651,29 @@ function LineHighlighter({ line, onChange }: { line: TranscriptLine; onChange: (
     meaning_ku_sorani: string;
     meaning_ku_badini: string;
   }>(null);
+
+  const onGenerate = async () => {
+    if (!form) return;
+    const word = form.word.trim();
+    if (!word) { toast.error("Select a word first"); return; }
+    setGenerating(true);
+    try {
+      const res = await generateFn({
+        data: { source_language: sourceLanguage as never, word, context: line.en },
+      });
+      setForm((f) => f && {
+        ...f,
+        part_of_speech: res.part_of_speech,
+        meaning_en: res.meaning_en || f.meaning_en,
+        meaning_ku_sorani: res.meaning_ku_sorani || f.meaning_ku_sorani,
+        meaning_ku_badini: res.meaning_ku_badini || f.meaning_ku_badini,
+      });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const findHighlightAt = (i: number) => highlights.find((h) => i >= h.start_index && i <= h.end_index);
 
@@ -744,8 +772,14 @@ function LineHighlighter({ line, onChange }: { line: TranscriptLine; onChange: (
       </div>
       {form && (
         <div className="rounded-md border p-3 grid gap-2 bg-muted/40">
-          <div className="text-xs text-muted-foreground">
-            {t("selected_word")}: <span className="font-medium text-foreground" dir="ltr">{form.word}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs text-muted-foreground">
+              {t("selected_word")}: <span className="font-medium text-foreground" dir="ltr">{form.word}</span>
+            </div>
+            <Button type="button" size="sm" variant="secondary" onClick={onGenerate} disabled={generating}>
+              {generating ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+              {generating ? t("generating") : t("generate")}
+            </Button>
           </div>
           <div>
             <Label className="text-xs">{t("part_of_speech")}</Label>
@@ -798,7 +832,7 @@ function LineHighlighter({ line, onChange }: { line: TranscriptLine; onChange: (
   );
 }
 
-function TranscriptEditor({ value, onChange }: { value: TranscriptLine[]; onChange: (v: TranscriptLine[]) => void }) {
+function TranscriptEditor({ value, onChange, sourceLanguage }: { value: TranscriptLine[]; onChange: (v: TranscriptLine[]) => void; sourceLanguage: string }) {
   const update = (i: number, patch: Partial<TranscriptLine>) => {
     const next = value.slice();
     next[i] = { ...next[i], ...patch };
@@ -821,7 +855,7 @@ function TranscriptEditor({ value, onChange }: { value: TranscriptLine[]; onChan
             <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>✕</Button>
           </div>
           <Input placeholder="English line" dir="ltr" value={line.en} onChange={(e) => update(i, { en: e.target.value })} />
-          <LineHighlighter line={line} onChange={(highlights) => update(i, { highlights })} />
+          <LineHighlighter line={line} onChange={(highlights) => update(i, { highlights })} sourceLanguage={sourceLanguage} />
           <Input placeholder="Kurdish (Sorani) translation" value={line.ku_sorani ?? ""} onChange={(e) => update(i, { ku_sorani: e.target.value })} />
           <Input placeholder="Kurdish (Badini) translation" value={line.ku_badini ?? ""} onChange={(e) => update(i, { ku_badini: e.target.value })} />
         </div>
@@ -1004,6 +1038,7 @@ function BookForm({ value, onChange }: { value: Record<string, unknown>; onChang
       <BookParagraphEditor
         value={(value.content_json as BookParagraph[]) ?? []}
         onChange={(paragraphs) => set("content_json", paragraphs)}
+        sourceLanguage={(value.language_code as string) || "en"}
       />
     </div>
   );
@@ -1016,10 +1051,12 @@ function BookForm({ value, onChange }: { value: Record<string, unknown>; onChang
  * vs BookParagraph) have different shapes and this file already keeps each
  * content type's editor self-contained.
  */
-function ParagraphHighlighter({ paragraph, onChange }: { paragraph: BookParagraph; onChange: (highlights: WordHighlight[]) => void }) {
+function ParagraphHighlighter({ paragraph, onChange, sourceLanguage }: { paragraph: BookParagraph; onChange: (highlights: WordHighlight[]) => void; sourceLanguage: string }) {
   const { t } = useDialect();
   const words = tokenizeWords(paragraph.text);
   const highlights = paragraph.highlights ?? [];
+  const generateFn = useServerFn(generateWordMeaning);
+  const [generating, setGenerating] = useState(false);
   const [form, setForm] = useState<null | {
     mode: "create" | "edit";
     id?: string;
@@ -1031,6 +1068,29 @@ function ParagraphHighlighter({ paragraph, onChange }: { paragraph: BookParagrap
     meaning_ku_sorani: string;
     meaning_ku_badini: string;
   }>(null);
+
+  const onGenerate = async () => {
+    if (!form) return;
+    const word = form.word.trim();
+    if (!word) { toast.error("Select a word first"); return; }
+    setGenerating(true);
+    try {
+      const res = await generateFn({
+        data: { source_language: sourceLanguage as never, word, context: paragraph.text },
+      });
+      setForm((f) => f && {
+        ...f,
+        part_of_speech: res.part_of_speech,
+        meaning_en: res.meaning_en || f.meaning_en,
+        meaning_ku_sorani: res.meaning_ku_sorani || f.meaning_ku_sorani,
+        meaning_ku_badini: res.meaning_ku_badini || f.meaning_ku_badini,
+      });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const findHighlightAt = (i: number) => highlights.find((h) => i >= h.start_index && i <= h.end_index);
 
@@ -1128,8 +1188,14 @@ function ParagraphHighlighter({ paragraph, onChange }: { paragraph: BookParagrap
       </div>
       {form && (
         <div className="rounded-md border p-3 grid gap-2 bg-muted/40">
-          <div className="text-xs text-muted-foreground">
-            {t("selected_word")}: <span className="font-medium text-foreground" dir="ltr">{form.word}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs text-muted-foreground">
+              {t("selected_word")}: <span className="font-medium text-foreground" dir="ltr">{form.word}</span>
+            </div>
+            <Button type="button" size="sm" variant="secondary" onClick={onGenerate} disabled={generating}>
+              {generating ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+              {generating ? t("generating") : t("generate")}
+            </Button>
           </div>
           <div>
             <Label className="text-xs">{t("part_of_speech")}</Label>
@@ -1182,7 +1248,7 @@ function ParagraphHighlighter({ paragraph, onChange }: { paragraph: BookParagrap
   );
 }
 
-function BookParagraphEditor({ value, onChange }: { value: BookParagraph[]; onChange: (v: BookParagraph[]) => void }) {
+function BookParagraphEditor({ value, onChange, sourceLanguage }: { value: BookParagraph[]; onChange: (v: BookParagraph[]) => void; sourceLanguage: string }) {
   const update = (i: number, patch: Partial<BookParagraph>) => {
     const next = value.slice();
     next[i] = { ...next[i], ...patch };
@@ -1204,7 +1270,7 @@ function BookParagraphEditor({ value, onChange }: { value: BookParagraph[]; onCh
             <Button type="button" size="sm" variant="ghost" onClick={() => remove(i)}>✕</Button>
           </div>
           <Textarea placeholder="Paragraph text" dir="ltr" value={p.text} onChange={(e) => update(i, { text: e.target.value })} />
-          <ParagraphHighlighter paragraph={p} onChange={(highlights) => update(i, { highlights })} />
+          <ParagraphHighlighter paragraph={p} onChange={(highlights) => update(i, { highlights })} sourceLanguage={sourceLanguage} />
           <Input placeholder="Kurdish (Sorani) translation" value={p.ku_sorani ?? ""} onChange={(e) => update(i, { ku_sorani: e.target.value })} />
           <Input placeholder="Kurdish (Badini) translation" value={p.ku_badini ?? ""} onChange={(e) => update(i, { ku_badini: e.target.value })} />
         </div>
