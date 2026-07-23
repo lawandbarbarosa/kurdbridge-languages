@@ -106,6 +106,8 @@ export const english: typeof sorani = {
   meaning_kurdish: "Meaning (Kurdish)",
   save_highlight: "Save",
   remove_highlight: "Remove",
+  generate: "Generate",
+  generating: "Generating…",
   pos_noun: "Noun",
   pos_verb: "Verb",
   pos_adjective: "Adjective",
