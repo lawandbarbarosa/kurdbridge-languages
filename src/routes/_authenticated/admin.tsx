@@ -456,9 +456,29 @@ function VideosTab() {
   );
 }
 
+// A stalled network request (slow connection, a proxy that silently drops a long-running
+// upload, an expired session that never resolves, etc.) previously left the video upload
+// promise pending forever, so the UI stayed stuck on "Uploading…" with no way to recover
+// short of reloading the page. This wraps any promise with a generous but finite ceiling so
+// the UI always ends up in a resolved (success) or failed (clear error, retryable) state.
+// 12 minutes is intentionally generous — large video files legitimately take a while — this
+// only exists as a last-resort safety net, not a normal-path timeout.
+const UPLOAD_TIMEOUT_MS = 12 * 60 * 1000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, timeoutMessage: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(timeoutMessage)), ms);
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (err) => { clearTimeout(timer); reject(err); },
+    );
+  });
+}
+
 function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChange: (v: Record<string, unknown>) => void }) {
   const set = (k: string, v: unknown) => onChange({ ...value, [k]: v });
   const [uploading, setUploading] = useState(false);
+  const [uploadElapsed, setUploadElapsed] = useState(0);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
   const [translating, setTranslating] = useState(false);
@@ -466,18 +486,32 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
   const translateFn = useServerFn(translateTranscriptLines);
 
   const onUpload = async (file: File) => {
+    if (uploading) return; // guard against a second file being dropped in mid-upload
     setUploading(true);
+    const startedAt = Date.now();
+    setUploadElapsed(0);
+    const tick = setInterval(() => setUploadElapsed(Math.round((Date.now() - startedAt) / 1000)), 1000);
     try {
       const ext = file.name.split(".").pop() || "mp4";
       const path = `${(value.language_code as string) || "en"}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("videos").upload(path, file, { upsert: false, contentType: file.type });
+      const { error } = await withTimeout(
+        supabase.storage.from("videos").upload(path, file, { upsert: false, contentType: file.type }),
+        UPLOAD_TIMEOUT_MS,
+        "Upload timed out — the connection may have stalled. Please check your internet connection and try again (a smaller/compressed file may help).",
+      );
       if (error) throw error;
+      // Replacing an existing video: swap in the new path, but only after the new file has
+      // fully and successfully uploaded, so a failed/timed-out replacement never clobbers a
+      // working video_path. The old file is left in storage untouched (nothing else — the
+      // transcript, translations, title, etc. — is modified by this).
       set("video_path", path);
       toast.success("Uploaded");
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error((e as Error).message || "Upload failed. Please try again.");
     } finally {
+      clearInterval(tick);
       setUploading(false);
+      setUploadElapsed(0);
     }
   };
 
@@ -583,9 +617,9 @@ function VideoForm({ value, onChange }: { value: Record<string, unknown>; onChan
 
       <div className="rounded-md border p-3 bg-muted/30 grid gap-2">
         <Label>Video file</Label>
-        <Input type="file" accept="video/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); }} />
-        {value.video_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.video_path as string}</p> : <p className="text-xs text-muted-foreground">MP4 recommended. Uploads go to the private videos bucket.</p>}
-        {uploading && <p className="text-xs">Uploading…</p>}
+        <Input type="file" accept="video/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) onUpload(f); e.target.value = ""; }} />
+        {value.video_path ? <p className="text-xs text-muted-foreground">Uploaded: {value.video_path as string} · choose a file above to replace it</p> : <p className="text-xs text-muted-foreground">MP4 recommended. Uploads go to the private videos bucket.</p>}
+        {uploading && <p className="text-xs">Uploading… {uploadElapsed}s (large files can take a while — keep this tab open)</p>}
         <div className="flex gap-2 mt-1 flex-wrap">
           <Button type="button" size="sm" variant="secondary" onClick={onTranscribe} disabled={!value.video_path || transcribing}>
             {transcribing ? "Transcribing…" : "Auto-transcribe (ElevenLabs)"}
